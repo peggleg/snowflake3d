@@ -92,3 +92,19 @@ test('clear font layouts are deterministic watertight ornaments with fixed hangi
  assert.notDeepEqual(design({mode:'text',font:'lato',text:'GEORGE',textLayout:'single'}).vertices,design({mode:'text',font:'lato',text:'GEORGE',textLayout:'mirrored'}).vertices);
  assert.throws(()=>settings({textLayout:'bad'}));assert.throws(()=>settings({letterSpacing:41}));
 });
+
+test('flowing name snowflakes retain six arms, fixed ring and connected watertight geometry',()=>{
+ for(const font of ['montecarlo','niconne'])for(const text of ['GEORGE','Melissa','Ella',"O'Neil",'Joy','Ghijkl'])for(const textWeight of [.5,.8]){
+  const m=design({mode:'text',font,text,textLayout:'flowing',textWeight,textSize:110});checkMesh(m);assert.equal(m.bounds.maxY,57);assert.equal(m.valid,true);
+  const bore=m.loops.find(l=>l.every(([x,y])=>Math.abs(x)<=2.001&&Math.abs(y-53)<=2.001));assert.ok(bore);
+ }
+ for(const diameter of [40,245])checkMesh(design({mode:'text',text:'George',font:'montecarlo',textLayout:'flowing',diameter,textSize:150,textPosition:-10,printer:'a1'}));
+ const s=settings({mode:'text',text:'GEORGE',font:'montecarlo',textLayout:'flowing',textWeight:.6});assert.equal(s.text,'George');assert.deepEqual(decode('?'+encode(s)),s);assert.deepEqual(design(s).vertices,design(decode('?'+encode(s))).vertices);assert.throws(()=>settings({textWeight:.1}));
+});
+
+test('recommended ornamental fonts keep text-test words connected and printable',()=>{
+ for(const font of ['courgette','berkshireswash'])for(const text of ['text test','George','Abcdef','Ghijkl',"O'Neil"]){
+  const s=settings({mode:'text',font,text,textLayout:'flowing',textWeight:.65,textSize:110}),m=design(s);checkMesh(m);assert.equal(m.valid,true);assert.equal(m.bounds.maxY,57);assert.deepEqual(design(decode('?'+encode(s))).vertices,m.vertices);
+ }
+ for(const font of ['courgette','berkshireswash'])for(const diameter of [40,245])for(const textWeight of [.5,1.2])checkMesh(design({mode:'text',font,text:'text test',textLayout:'flowing',diameter,textWeight,printer:'a1'}));
+});

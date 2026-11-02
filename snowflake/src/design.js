@@ -3,16 +3,17 @@ import earcut from 'earcut';
 import {lettering,normalizeText} from './lettering.js';
 import {scriptLettering} from './script-lettering.js';
 import {conformTriangles} from './triangulate.js';
-export const defaults={seed:'winter-2026',mode:'random',text:'',font:'stroke',textLayout:'mirrored',letterSpacing:0,textSize:100,textPosition:0,diameter:100,thickness:3,complexity:5,branch:2,fullness:0,pattern:'mixed',printer:'mini'};
+export const defaults={seed:'winter-2026',mode:'random',text:'text test',font:'stroke',textLayout:'mirrored',letterSpacing:0,textWeight:.65,textSize:100,textPosition:0,diameter:100,thickness:3,complexity:5,branch:2,fullness:0,pattern:'mixed',printer:'mini'};
 export const printers={mini:{name:'Bambu Lab A1 mini',size:180},a1:{name:'Bambu Lab A1',size:256}};
 export function settings(input={}){
  const s={...defaults,...input};
- for(const [k,min,max] of [['diameter',40,245],['thickness',1,8],['complexity',1,9],['branch',1.2,4],['fullness',0,100],['textSize',60,150],['textPosition',-10,10],['letterSpacing',0,40]]){s[k]=Number(s[k]);if(!Number.isFinite(s[k])||s[k]<min||s[k]>max)throw Error(`Invalid ${k}: use ${min}–${max}.`);}
+ for(const [k,min,max] of [['diameter',40,245],['thickness',1,8],['complexity',1,9],['branch',1.2,4],['fullness',0,100],['textSize',60,150],['textPosition',-10,10],['letterSpacing',0,40],['textWeight',.5,1.2]]){s[k]=Number(s[k]);if(!Number.isFinite(s[k])||s[k]<min||s[k]>max)throw Error(`Invalid ${k}: use ${min}–${max}.`);}
  if(!Number.isInteger(s.complexity)||!printers[s.printer]||!['mixed','open','lattice'].includes(s.pattern))throw Error('Invalid design settings.');
  if(!['random','text','prompt'].includes(s.mode))throw Error('Invalid design mode.');
- if(!['stroke','montecarlo','niconne','lato','breeserif'].includes(s.font))throw Error('Invalid text font.');
- if(!['mirrored','single'].includes(s.textLayout))throw Error('Invalid text layout.');
- s.text=s.mode==='text'&&s.font!=='stroke'?String(s.text).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,' '):normalizeText(s.text);
+ if(!['stroke','montecarlo','niconne','lato','breeserif','courgette','berkshireswash'].includes(s.font))throw Error('Invalid text font.');
+ if(!['mirrored','single','flowing'].includes(s.textLayout))throw Error('Invalid text layout.');
+ s.text=(s.mode==='random'||s.mode==='text'&&s.font!=='stroke')?String(s.text).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,' '):normalizeText(s.text);
+ if(s.mode==='text'&&s.textLayout==='flowing'&&['montecarlo','niconne','courgette','berkshireswash'].includes(s.font)&&s.text===s.text.toUpperCase())s.text=s.text.replace(/[A-Z][A-Z']*/g,word=>word[0]+word.slice(1).toLowerCase());
  if(s.mode==='text'&&(s.text.length>12||!/^[A-Za-z0-9 '-]*$/.test(s.text)))throw Error('Use up to 12 letters A–Z, numbers, spaces or hyphens.');
  if(s.text.length>120)throw Error('Use a description of up to 120 characters.');
  if(s.mode!=='random'&&!/[A-Za-z0-9]/.test(s.text))throw Error('Enter some text for your snowflake.');
@@ -27,14 +28,15 @@ function circle(x,y,r,n=96){return Array.from({length:n},(_,i)=>[x+r*Math.cos(i*
 export function design(input){
  const s=settings(input),rng=random(s.mode==='prompt'?`text:${s.text}|${s.seed}`:s.seed),slots=Array.from({length:100},rng),R=s.diameter/2,w=s.branch,shapes=[];
  const prompt=s.mode==='prompt',lush=prompt&&/FULL|DENSE|FERN|BROAD|LACE|LEAF/.test(s.text),fine=prompt&&/DELICATE|FINE|THIN|AIRY/.test(s.text);
- const script=s.mode==='text'&&s.font!=='stroke'?scriptLettering(s.text,R,w,s.font,s.textSize*(.96+slots[81]*.08),s.textPosition+(slots[82]-.5)*4,s.textLayout,s.letterSpacing):null;
+ const script=s.mode==='text'&&s.font!=='stroke'?scriptLettering(s.text,R,w,s.font,s.textSize*(.96+slots[81]*.08),s.textPosition+(slots[82]-.5)*4,s.textLayout,s.letterSpacing,s.textWeight):null;
  const letters=s.mode==='text'&&!script?lettering(s.text,R,w):null;
  const add=p=>{const q=path(p);if(!ClipperLib.Clipper.Orientation(q))q.reverse();shapes.push(q);};
  const line=(a,b,width)=>{const dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy),nx=-dy/l*width/2,ny=dx/l*width/2;add([[a[0]+nx,a[1]+ny],[a[0]-nx,a[1]-ny],[b[0]-nx,b[1]-ny],[b[0]+nx,b[1]+ny]]);};
- add(circle(0,0,w*2,24));
+ const flowing=script&&s.textLayout==='flowing';
+ add(circle(0,0,flowing?Math.max(1,s.textWeight*1.5):w*2,24));
  for(let arm=0;arm<6;arm++){
  const angle=Math.PI/2+arm*Math.PI/3,point=(x,y)=>[x*Math.cos(angle)-y*Math.sin(angle),x*Math.sin(angle)+y*Math.cos(angle)];
- line(point(0,0),point(R,0),letters||script?Math.max(.8,w*.55):w);
+ line(point(0,0),point(R,0),flowing?s.textWeight:letters||script?Math.max(.8,w*.55):w);
  if(script){
   for(const side of s.textLayout==='single'?[1]:[-1,1])for(const contour of script.paths){const q=path(contour.map(([x,y])=>point(x,y*side)));if(side<0)q.reverse();shapes.push(q);}
   continue;
