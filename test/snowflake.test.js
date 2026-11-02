@@ -225,3 +225,10 @@ test('natural workshop families export closed connected meshes across seeds and 
  }
  for(const centre of ['star-frame','hex-frame','rosette','web'])checkMesh(design({growth:'natural',centre,complexity:18,fullness:100,branch:1.2}));
 });
+test('Airy is the new default and open text presets remain connected printable meshes',()=>{
+ assert.equal(defaults.growth,'airy');
+ for(const armLayout of ['all','alternating'])for(const font of ['courgette','berkshireswash','lato','breeserif']){
+  const s=settings({mode:'text',growth:'airy',font,text:['lato','breeserif'].includes(font)?'Snow':'Text Test',armLayout,textLayout:['lato','breeserif'].includes(font)?'single':'flowing',textWeight:.55,letterSpacing:15,textSize:100,branch:1.2});
+  const m=design(s);checkMesh(m);assert.equal(m.valid,true);assert.deepEqual(design(decode(encode(s))).vertices,m.vertices);
+ }
+});
