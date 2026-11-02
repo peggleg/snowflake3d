@@ -1,2 +1,20 @@
 import {defineConfig} from 'vite';
-export default defineConfig({root:'snowflake',publicDir:'public',build:{outDir:'../dist-snowflake',emptyOutDir:true},plugins:[{name:'isolated-routes',generateBundle(){this.emitFile({type:'asset',fileName:'_redirects',source:'/ /snowflake 302\n/snowflake /index.html 200\n/snowflake/ /index.html 200\n'});this.emitFile({type:'asset',fileName:'404.html',source:'<!doctype html><title>Not found</title><h1>Not found</h1>'});}}]});
+
+export default defineConfig({
+ root:'snowflake',
+ publicDir:'public',
+ build:{outDir:'../dist-snowflake',emptyOutDir:true},
+ plugins:[{
+  name:'isolated-routes',
+  generateBundle:{order:'post',handler(_,bundle){
+   // Pages serves snowflake.html at /snowflake using its native clean URLs.
+   // Rewriting to index.html can canonicalize to / and loop back here.
+   const page=bundle['index.html'];
+   if(!page||page.type!=='asset')throw Error('Missing generator HTML entry.');
+   delete bundle['index.html'];
+   this.emitFile({type:'asset',fileName:'snowflake.html',source:page.source});
+   this.emitFile({type:'asset',fileName:'_redirects',source:'/ /snowflake 302\n/snowflake/ /snowflake 302\n'});
+   this.emitFile({type:'asset',fileName:'404.html',source:'<!doctype html><title>Not found</title><h1>Not found</h1>'});
+  }}
+ }]
+});

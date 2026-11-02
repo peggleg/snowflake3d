@@ -59,6 +59,12 @@ This command explicitly uploads with `--branch preview`, without promoting `main
 
 Verify the preview's `/snowflake`, root redirect, 24-design generation, seed/link reload, STL and 3MF downloads, and a 404 for unrelated routes before promoting changes. To promote reviewed code, merge `preview` into `main`; a Git-integrated project then deploys production.
 
+## Troubleshooting redirect loops
+
+The build emits `snowflake.html`, which Pages serves directly at `/snowflake`. The root redirects there with 302. Do not rewrite `/snowflake` to `/index.html`: Pages can canonicalize that index back to `/`, creating a loop with the root redirect. The build check enforces the direct HTML route and absence of a root index.
+
+After deploying a routing fix, use the new deployment URL or the `preview` branch alias. A hash-based URL such as `8bd716c1.snowflake3d.pages.dev` remains tied to its old deployment and will not acquire later fixes. Deleting cookies is not a fix for an application redirect loop.
+
 ## If a snowflake Pages project already exists
 
 If it is connected to the old repository, create the new project above rather than changing the lithophane project's source or deployment settings. If it uses Direct Upload, choose whether to keep manual uploads or create the new Git-integrated project for automatic deployments; Cloudflare does not support switching a Direct Upload project to Git integration in place.
