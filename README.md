@@ -23,6 +23,11 @@ Deploy only `dist-snowflake/`. See [Cloudflare deployment](CLOUDFLARE.md).
 
 ## Features
 
+- Three design modes: Random, readable text repeated in six arms, and a text-inspired abstract pattern.
+- Readable text supports up to 12 uppercase letters A–Z, digits, spaces and hyphens; common accented letters are normalized. Longer words need a larger body. Exports are blocked when the letter openings would be too small.
+- Abstract descriptions support up to 120 characters and deterministically influence the pattern. Keywords such as full, dense, fern, lace, delicate and airy adjust the local procedural rules; no AI service is used.
+- Both text modes remain entirely in-browser and are preserved by batch generation and design links. Text is part of the copied URL, so recipients can reproduce it.
+
 - Generate 1–24 different snowflakes at a time; select a thumbnail to edit/download an individual ornament.
 - Seeded, reproducible geometry with complexity, branch width, opening and fullness controls. Fullness adds broader boughs toward the tips; zero preserves the original design. Previous/Next history and Copy design link. The link restores one selected ornament, not an entire batch.
 - One connected, closed mesh, flat on Z=0. Body diameter defaults to 100 mm; thickness defaults to 3 mm.

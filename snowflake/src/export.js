@@ -3,9 +3,9 @@ import a1 from './profiles/a1.json' with {type:'json'};
 import {zipSync,strToU8} from './zip.js';
 import {stlBytes} from './stl.js';
 import {printers,encode} from './design.js';
-export function exportStl(mesh){if(!mesh.valid)throw Error('Ornament exceeds the selected build plate.');const bytes=stlBytes(mesh);bytes.fill(0,0,80);bytes.set(strToU8('Snowflake ornament v1; millimetres'));return bytes;}
+export function exportStl(mesh){if(!mesh.valid)throw Error('Ornament is not printable with these settings. Check the build plate and text size.');const bytes=stlBytes(mesh);bytes.fill(0,0,80);bytes.set(strToU8('Snowflake ornament v1; millimetres'));return bytes;}
 export function projectFiles(m){
- if(!m.valid)throw Error('Ornament exceeds the selected build plate.');
+ if(!m.valid)throw Error('Ornament is not printable with these settings. Check the build plate and text size.');
  const p=printers[m.s.printer],size=p.size,name=`${p.name} 0.4 nozzle`,cx=(m.bounds.minX+m.bounds.maxX)/2,cy=(m.bounds.minY+m.bounds.maxY)/2;
  const v=[];for(let i=0;i<m.vertices.length;i+=3)v.push(`<vertex x="${m.vertices[i]}" y="${m.vertices[i+1]}" z="${m.vertices[i+2]}"/>`);
  const t=[];for(let i=0;i<m.faces.length;i+=3)t.push(`<triangle v1="${m.faces[i]}" v2="${m.faces[i+1]}" v3="${m.faces[i+2]}"/>`);

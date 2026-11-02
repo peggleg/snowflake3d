@@ -42,3 +42,29 @@ test('fullness adds outer coverage without changing the seed',()=>{
  const area=m=>Math.abs(m.loops.reduce((sum,l)=>sum+l.reduce((a,p,i)=>{const q=l[(i+1)%l.length];return a+p[0]*q[1]-q[0]*p[1];},0)/2,0));
  assert.equal(open.s.seed,full.s.seed);assert.ok(area(full)>area(open)*1.3);assert.notDeepEqual(open.vertices,full.vertices);
 });
+
+test('readable text supports the alphabet and digits as a connected watertight ornament',()=>{
+ for(const text of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')checkMesh(design({mode:'text',text}));
+ for(const text of ['JOY','ELLA','A-B','MERRY XMAS','123456789012'])for(const diameter of [40,100,245]){
+  const m=design({mode:'text',text,diameter,printer:'a1'});checkMesh(m);assert.equal(m.bounds.maxY,diameter/2+7);
+ }
+ const small=design({mode:'text',text:'MERRY XMAS',diameter:40});assert.equal(small.issue,'text');assert.throws(()=>export3mf(small));assert.throws(()=>exportStl(small));
+ assert.equal(design({mode:'text',text:'MERRY XMAS',diameter:160,printer:'a1'}).valid,true);
+ assert.equal(settings({mode:'text',text:' Zoë '}).text,'ZOE');assert.throws(()=>settings({mode:'text',text:'HELLO!'}));assert.throws(()=>settings({mode:'text',text:''}));assert.throws(()=>settings({mode:'text',text:'TOO MANY LETTERS'}));
+});
+test('text modes reproduce through links and batch settings',async()=>{
+ const {batchSettings}=await import('../snowflake/src/batch.js');
+ for(const mode of ['text','prompt']){
+  const s=settings({mode,text:mode==='text'?'JOY':'full fern'}),m=design(s);
+  assert.deepEqual(design(decode('?'+encode(s))).vertices,m.vertices);
+  const batch=batchSettings(s,24);assert.ok(batch.every(item=>item.mode===mode&&item.text===s.text));
+  const files=projectFiles(m);assert.equal(JSON.parse(files['Metadata/snowflake.json']).settings.text,s.text);
+ }
+});
+test('abstract text changes geometry deterministically and retains a connected printable mesh',()=>{
+ for(const text of ['full fern','delicate crystal','dense lace','winter woods'])for(const diameter of [40,100,245])for(const pattern of ['open','lattice']){
+  const m=design({mode:'prompt',text,diameter,pattern,printer:'a1',complexity:9});checkMesh(m);assert.equal(m.bounds.maxY,diameter/2+7);
+ }
+ assert.notDeepEqual(design({mode:'prompt',text:'winter'}).vertices,design({mode:'prompt',text:'summer'}).vertices);
+ assert.equal(settings({mode:'random',text:'THIS IS A LONG DESCRIPTION!'}).mode,'random');
+});

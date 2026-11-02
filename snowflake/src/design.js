@@ -1,11 +1,18 @@
 import ClipperLib from 'clipper-lib';
 import earcut from 'earcut';
-export const defaults={seed:'winter-2026',diameter:100,thickness:3,complexity:5,branch:2,fullness:0,pattern:'mixed',printer:'mini'};
+import {lettering,normalizeText} from './lettering.js';
+import {conformTriangles} from './triangulate.js';
+export const defaults={seed:'winter-2026',mode:'random',text:'',diameter:100,thickness:3,complexity:5,branch:2,fullness:0,pattern:'mixed',printer:'mini'};
 export const printers={mini:{name:'Bambu Lab A1 mini',size:180},a1:{name:'Bambu Lab A1',size:256}};
 export function settings(input={}){
  const s={...defaults,...input};
  for(const [k,min,max] of [['diameter',40,245],['thickness',1,8],['complexity',1,9],['branch',1.2,4],['fullness',0,100]]){s[k]=Number(s[k]);if(!Number.isFinite(s[k])||s[k]<min||s[k]>max)throw Error(`Invalid ${k}: use ${min}–${max}.`);}
  if(!Number.isInteger(s.complexity)||!printers[s.printer]||!['mixed','open','lattice'].includes(s.pattern))throw Error('Invalid design settings.');
+ if(!['random','text','prompt'].includes(s.mode))throw Error('Invalid design mode.');
+ s.text=normalizeText(s.text);
+ if(s.mode==='text'&&(s.text.length>12||!/^[A-Z0-9 -]*$/.test(s.text)))throw Error('Use up to 12 letters A–Z, numbers, spaces or hyphens.');
+ if(s.text.length>120)throw Error('Use a description of up to 120 characters.');
+ if(s.mode!=='random'&&!/[A-Z0-9]/.test(s.text))throw Error('Enter some text for your snowflake.');
  s.seed=String(s.seed);if(!s.seed.length||s.seed.length>128)throw Error('Seed must contain 1–128 characters.');
  return s;
 }
@@ -15,15 +22,25 @@ const scale=10000;
 const path=p=>p.map(([x,y])=>({X:Math.round(x*scale),Y:Math.round(y*scale)}));
 function circle(x,y,r,n=96){return Array.from({length:n},(_,i)=>[x+r*Math.cos(i*2*Math.PI/n),y+r*Math.sin(i*2*Math.PI/n)]);}
 export function design(input){
- const s=settings(input),rng=random(s.seed),slots=Array.from({length:100},rng),R=s.diameter/2,w=s.branch,shapes=[];
+ const s=settings(input),rng=random(s.mode==='prompt'?`text:${s.text}|${s.seed}`:s.seed),slots=Array.from({length:100},rng),R=s.diameter/2,w=s.branch,shapes=[];
+ const prompt=s.mode==='prompt',lush=prompt&&/FULL|DENSE|FERN|BROAD|LACE|LEAF/.test(s.text),fine=prompt&&/DELICATE|FINE|THIN|AIRY/.test(s.text);
+ const letters=s.mode==='text'?lettering(s.text,R,w):null;
  const add=p=>{const q=path(p);if(!ClipperLib.Clipper.Orientation(q))q.reverse();shapes.push(q);};
  const line=(a,b,width)=>{const dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy),nx=-dy/l*width/2,ny=dx/l*width/2;add([[a[0]+nx,a[1]+ny],[a[0]-nx,a[1]-ny],[b[0]-nx,b[1]-ny],[b[0]+nx,b[1]+ny]]);};
  add(circle(0,0,w*2,24));
  for(let arm=0;arm<6;arm++){
  const angle=Math.PI/2+arm*Math.PI/3,point=(x,y)=>[x*Math.cos(angle)-y*Math.sin(angle),x*Math.sin(angle)+y*Math.cos(angle)];
- line(point(0,0),point(R,0),w);
+ line(point(0,0),point(R,0),letters?Math.max(.8,w*.55):w);
+ if(letters){
+  for(const [a,b]of letters.segments)line(point(...a),point(...b),letters.width);
+  // Joined strokes round corners without leaving gaps between letter segments.
+  for(const [a,b]of letters.segments)for(const p of [a,b]){const [x,y]=point(...p);add(circle(x,y,letters.width/2,12));}
+  const length=R*(.03+slots[80]*.02);
+  for(const side of [-1,1])line(point(R*.93,0),point(R*.96,side*length),Math.max(.8,w*.55));
+  continue;
+ }
  for(let j=0;j<s.complexity;j++){
- const t=.16+j*.068+(slots[j]-.5)*.035,base=R*t,len=R*(.10+slots[10+j]*.14)*(1-t),slope=.65+slots[20+j]*.6;
+ const t=.16+j*.068+(slots[j]-.5)*.035,base=R*t,len=R*(.10+slots[10+j]*.14)*(1-t)*(lush?1.4:fine?.85:1),slope=.65+slots[20+j]*.6;
  for(const side of [-1,1]){
  const a=point(base,0),b=point(Math.min(R-w,base+len),side*len*slope);line(a,b,w*.75);
  if(s.pattern==='lattice'||s.pattern==='mixed'&&slots[30+j]>.48)line(b,point(Math.min(R-w,base+len*1.9),0),w*.65);
@@ -32,7 +49,7 @@ export function design(input){
  }
  // Extra paired boughs fill the outer arms; the original seed slots are unchanged.
  // At zero this adds no geometry, preserving every existing v1 design link.
- const full=s.fullness/100;
+ const full=Math.max(s.fullness/100,lush?.8:0);
  if(full>0)for(let j=0;j<5;j++){
   const t=.40+j*.12,advance=R*(.06+slots[50+j]*.035)*full;
   const spread=R*(.25-j*.03)*full*(.85+slots[60+j]*.15);
@@ -49,16 +66,19 @@ export function design(input){
  const clip=new ClipperLib.Clipper();clip.AddPaths(shapes,ClipperLib.PolyType.ptSubject,true);let union=new ClipperLib.Paths();clip.Execute(ClipperLib.ClipType.ctUnion,union,ClipperLib.PolyFillType.pftNonZero,ClipperLib.PolyFillType.pftNonZero);
  const cut=new ClipperLib.Clipper();cut.AddPaths(union,ClipperLib.PolyType.ptSubject,true);cut.AddPath(path(circle(0,cy,2)),ClipperLib.PolyType.ptClip,true);const tree=new ClipperLib.PolyTree();cut.Execute(ClipperLib.ClipType.ctDifference,tree,ClipperLib.PolyFillType.pftNonZero,ClipperLib.PolyFillType.pftNonZero);
  if(tree.Childs().length!==1)throw Error('Design must be one connected ornament.');
- const outer=tree.Childs()[0],loops=[outer.Contour(),...outer.Childs().map(n=>n.Contour())].map(p=>p.map(v=>[v.X/scale,v.Y/scale]));
+ const outer=tree.Childs()[0],loops=[outer.Contour(),...outer.Childs().map(n=>n.Contour())].map(p=>letters?ClipperLib.Clipper.CleanPolygon(p,2):p).map(p=>p.map(v=>[v.X/scale,v.Y/scale]));
  const flat=[],holes=[];for(let i=0;i<loops.length;i++){if(i)holes.push(flat.length/2);for(const p of loops[i])flat.push(...p);}
  // Integer coordinates prevent floating-point sliver triangles at collinear intersections.
- const top=earcut(s.fullness>0?flat.map(v=>Math.round(v*scale)):flat,holes),n=flat.length/2,vertices=[],faces=[];
+ let top=earcut(s.fullness>0||letters||prompt?flat.map(v=>Math.round(v*scale)):flat,holes);
+ if(letters)top=conformTriangles(flat,top);
+ const n=flat.length/2,vertices=[],faces=[];
  for(const z of [0,s.thickness])for(let i=0;i<n;i++)vertices.push(flat[i*2],flat[i*2+1],z);
  for(let i=0;i<top.length;i+=3){const [a,b,c]=top.slice(i,i+3);faces.push(a,c,b,a+n,b+n,c+n);}
  let offset=0;for(const loop of loops){for(let j=0;j<loop.length;j++){const a=offset+j,b=offset+(j+1)%loop.length;faces.push(a,b,a+n,b,b+n,a+n);}offset+=loop.length;}
  const xs=flat.filter((_,i)=>i%2===0),ys=flat.filter((_,i)=>i%2===1),bounds={minX:Math.min(...xs),maxX:Math.max(...xs),minY:Math.min(...ys),maxY:Math.max(...ys)};
- const width=bounds.maxX-bounds.minX,height=bounds.maxY-bounds.minY,limit=printers[s.printer].size-4,valid=width<=limit&&height<=limit;
- return {s,loops,vertices:new Float64Array(vertices),faces:new Uint32Array(faces),bounds,width,height,valid,limit};
+ const width=bounds.maxX-bounds.minX,height=bounds.maxY-bounds.minY,limit=printers[s.printer].size-4,fits=width<=limit&&height<=limit,valid=fits&&(!letters||letters.printable);
+ const issue=!fits?'plate':letters&&!letters.printable?'text':'';
+ return {s,loops,vertices:new Float64Array(vertices),faces:new Uint32Array(faces),bounds,width,height,valid,limit,issue};
 }
 export function encode(s){return new URLSearchParams({v:'1',...s}).toString();}
 export function decode(search){const q=new URLSearchParams(search);if(q.has('v')&&q.get('v')!=='1')throw Error('Unsupported design version.');return settings(Object.fromEntries(Object.entries(defaults).filter(([k])=>q.has(k)).map(([k])=>[k,q.get(k)])));}
