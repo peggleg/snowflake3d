@@ -25,7 +25,7 @@ test('batch generation provides 24 unique reproducible seeds and preserves share
 });
 
 test('zero fullness preserves original v1 geometry and old links',async()=>{
- const {createHash}=await import('node:crypto');const m=design({seed:'winter-2026'});
+ const {createHash}=await import('node:crypto');const m=design({seed:'winter-2026',centre:'original'});
  assert.equal(createHash('sha256').update(new Uint8Array(m.vertices.buffer)).update(new Uint8Array(m.faces.buffer)).digest('hex'),'5e0449ed9b97473c088561525191f8243cdb822b6529c9232d4cf81bb99fa99f');
  assert.equal(decode('?v=1&seed=winter-2026').fullness,0);
  const s={...defaults,fullness:80};assert.deepEqual(decode('?'+encode(s)),s);assert.throws(()=>settings({fullness:101}));assert.throws(()=>settings({fullness:NaN}));
@@ -131,4 +131,15 @@ test('extended complexity creates connected watertight hierarchical branches at 
   const s=settings({mode,armLayout:'alternating',font:'courgette',textLayout:'flowing',text:mode==='prompt'?'full fern':'text test',complexity:18,branch:1.2}),m=design(s);checkMesh(m);assert.deepEqual(design(decode('?'+encode(s))).vertices,m.vertices);
  }
  const low=design({complexity:9,branch:1.2}),mid=design({complexity:12,branch:1.2}),high=design({complexity:18,branch:1.2});assert.ok(mid.faces.length>low.faces.length);assert.ok(high.faces.length>mid.faces.length);assert.throws(()=>settings({complexity:19}));
+});
+
+test('centre styles and seeded random choices produce connected closed ornaments',async()=>{
+ const {centreChoices}=await import('../snowflake/src/centre.js');
+ for(const centre of centreChoices)for(const diameter of [40,100,245]){
+  const m=design({centre,diameter,branch:diameter===40?4:1.2,centreSize:diameter===40?10:30,complexity:12,printer:'a1'});checkMesh(m);assert.equal(m.centreKind,centre);assert.equal(m.bounds.maxY,diameter/2+7);
+  const cy=diameter/2+3,bore=m.loops.find(l=>l.every(([x,y])=>Math.abs(x)<=2.001&&Math.abs(y-cy)<=2.001));assert.ok(bore);
+ }
+ for(const centre of centreChoices){const s=settings({centre,mode:'text',armLayout:'alternating',font:'courgette',textLayout:'flowing',text:'text test',centreSize:30}),m=design(s);checkMesh(m);assert.deepEqual(design(decode('?'+encode(s))).vertices,m.vertices);}
+ const kinds=new Set();for(let i=0;i<24;i++){const s=settings({seed:`centre-${i}`}),m=design(s);kinds.add(m.centreKind);assert.equal(design({...s,complexity:15}).centreKind,m.centreKind);}assert.ok(kinds.size>=6);
+ assert.equal(defaults.centre,'random');assert.equal(decode('').centre,'random');assert.equal(decode('?v=1&seed=winter-2026').centre,'original');assert.throws(()=>settings({centre:'bad'}));assert.throws(()=>settings({centreSize:31}));
 });

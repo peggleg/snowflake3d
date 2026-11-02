@@ -1,9 +1,11 @@
 import './style.css';
+import {centreLabels} from './centre.js';
 import {previewRotation} from './preview-rotation.js';
 import {batchSettings} from './batch.js';
 import {design,defaults,decode,encode,printers} from './design.js';
 import {exportStl,export3mf} from './export.js';
 const $=id=>document.getElementById(id),form=$('settings');let current,history=[],index=-1,batch=[];
+let legacyCentre=new URLSearchParams(location.search).has('v')&&!new URLSearchParams(location.search).has('centre');
 const rotation=previewRotation($('preview'),$('flake'),$('view-rotation'),$('rotation-value'),$('reset-view'),$('rotate-left'),$('rotate-right'));
 function outline(m){return m.loops.map(loop=>'M'+loop.map(([x,y])=>`${x},${-y}`).join('L')+'Z').join('');}
 function gallery(){
@@ -16,6 +18,8 @@ function render(s,record=true){
  const m=design(s);current=m;
  if(record){history=history.slice(0,index+1);history.push({...m.s});index++;}
  for(const [k,v] of Object.entries(m.s))form.elements[k].value=v;
+ $('centre-size-control').hidden=m.s.centre==='original';$('centre-size-value').value=`${m.s.centreSize}%`;
+ $('centre-hint').textContent=m.s.centre==='random'?`Seeded choice: ${centreLabels[m.centreKind]}. Generate another to vary it.`:m.s.centre==='original'?'Original centre preserved. Choose Random for a seeded centre variation.':'Centre size scales with the flake. Larger centres can overlap lettering.';
  const mixed=m.s.mode==='text'&&m.s.armLayout==='alternating';
  const flowing=m.s.mode==='text'&&m.s.font!=='stroke'&&m.s.textLayout==='flowing';
  const textMode=m.s.mode==='text',scriptMode=textMode&&m.s.font!=='stroke',hasText=m.s.mode!=='random';$('text-control').hidden=$('text-hint').hidden=!hasText;form.elements.text.required=hasText;
@@ -42,7 +46,7 @@ function render(s,record=true){
  window.history.replaceState(null,'',url(m.s));
 }
 form.addEventListener('input',()=>{if(!form.checkValidity())$('stl').disabled=$('three-mf').disabled=true;});
-form.addEventListener('change',event=>{try{if(event.target.name==='mode'){const mode=form.elements.mode.value,hasText=mode!=='random';$('text-control').hidden=$('text-hint').hidden=!hasText;form.elements.text.required=hasText;form.elements.text.maxLength=mode==='text'?12:120;if(mode==='text'&&current.s.mode!=='text'){form.elements.font.value='courgette';form.elements.textLayout.value='flowing';form.elements.letterSpacing.value='0';form.elements.textSize.value='110';}if(hasText&&!form.elements.text.value)form.elements.text.value=mode==='text'?'text test':'FULL FERN';if(mode==='text')form.elements.text.value=form.elements.text.value.slice(0,12);}
+form.addEventListener('change',event=>{try{if(event.target.name==='centre')legacyCentre=false;if(event.target.name==='mode'){const mode=form.elements.mode.value,hasText=mode!=='random';$('text-control').hidden=$('text-hint').hidden=!hasText;form.elements.text.required=hasText;form.elements.text.maxLength=mode==='text'?12:120;if(mode==='text'&&current.s.mode!=='text'){form.elements.font.value='courgette';form.elements.textLayout.value='flowing';form.elements.letterSpacing.value='0';form.elements.textSize.value='110';}if(hasText&&!form.elements.text.value)form.elements.text.value=mode==='text'?'text test':'FULL FERN';if(mode==='text')form.elements.text.value=form.elements.text.value.slice(0,12);}
 if(event.target.name==='font'&&['lato','breeserif'].includes(form.elements.font.value)&&!['lato','breeserif'].includes(current.s.font)){form.elements.textLayout.value='single';form.elements.letterSpacing.value='10';}
 if(event.target.name==='font'&&['montecarlo','niconne','courgette','berkshireswash'].includes(form.elements.font.value)&&(['lato','breeserif'].includes(current.s.font)||['courgette','berkshireswash'].includes(form.elements.font.value)&&!['courgette','berkshireswash'].includes(current.s.font))){form.elements.textLayout.value='flowing';form.elements.letterSpacing.value='0';form.elements.textSize.value='110';}
 if(event.target.name==='armLayout'&&form.elements.armLayout.value==='alternating'){form.elements.complexity.value='6';form.elements.fullness.value='80';form.elements.branch.value='1.2';form.elements.pattern.value='open';}
@@ -53,9 +57,9 @@ $('generate').onclick=async()=>{
  const a=crypto.getRandomValues(new Uint32Array(4)),seed=Array.from(a,x=>x.toString(16).padStart(8,'0')).join('');
  const controls=[...document.querySelectorAll('button,input,select')];controls.forEach(el=>el.disabled=true);
  try{
-  const inputs=batchSettings({...current.s,seed},Number($('batch-count').value)),result=[];
+  const inputs=batchSettings({...current.s,seed,centre:legacyCentre?'random':current.s.centre},Number($('batch-count').value)),result=[];
   for(let i=0;i<inputs.length;i++){message(`Generating snowflake ${i+1} of ${inputs.length}…`);await new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));result.push(design(inputs[i]));}
-  batch=result;
+  batch=result;legacyCentre=false;
   const first=index+1;history=history.slice(0,first);history.push(...batch.map(m=>({...m.s})));index=first;
   render(batch[0].s,false);message(batch.length===1?'A fresh snowflake, made just here.':`${batch.length} different snowflakes ready. Select one below to refine or download; each is a separate ornament.`);
  }catch(e){message(e.message);}finally{controls.forEach(el=>el.disabled=false);$('previous').disabled=index<=0;$('next').disabled=index>=history.length-1;$('stl').disabled=$('three-mf').disabled=!current.valid;}
