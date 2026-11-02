@@ -82,3 +82,13 @@ test('mirrored script fonts create watertight connected name ornaments with a fi
 test('script fonts preserve letter counters and joins across mixed-case words and punctuation',()=>{
  for(const font of ['montecarlo','niconne'])for(const text of ['Abcdef','Ghijkl','Mnopqr','Stuvwx','Yz0123',"O'Neil"]){checkMesh(design({mode:'text',font,text}));}
 });
+
+test('clear font layouts are deterministic watertight ornaments with fixed hanging bores',()=>{
+ for(const font of ['lato','breeserif'])for(const text of ['GEORGE','George','Ella',"O'Neil",'ABC123'])for(const textLayout of ['single','mirrored']){
+  const s=settings({mode:'text',font,text,textLayout,letterSpacing:10}),m=design(s);checkMesh(m);assert.equal(m.bounds.maxY,57);assert.equal(m.valid,true);assert.deepEqual(design(decode('?'+encode(s))).vertices,m.vertices);
+  const bore=m.loops.find(l=>l.every(([x,y])=>Math.abs(x)<=2.001&&Math.abs(y-53)<=2.001));assert.ok(bore);
+ }
+ for(const diameter of [40,245])for(const branch of [1.2,4])checkMesh(design({mode:'text',font:'lato',text:'GEORGE',diameter,branch,textLayout:'single',textSize:140,textPosition:-2,letterSpacing:20,printer:'a1'}));
+ assert.notDeepEqual(design({mode:'text',font:'lato',text:'GEORGE',textLayout:'single'}).vertices,design({mode:'text',font:'lato',text:'GEORGE',textLayout:'mirrored'}).vertices);
+ assert.throws(()=>settings({textLayout:'bad'}));assert.throws(()=>settings({letterSpacing:41}));
+});

@@ -6,7 +6,7 @@ const $=id=>document.getElementById(id),form=$('settings');let current,history=[
 function outline(m){return m.loops.map(loop=>'M'+loop.map(([x,y])=>`${x},${-y}`).join('L')+'Z').join('');}
 function gallery(){
  const container=$('batch-gallery');const existing=Array.from(container.children);container.hidden=batch.length<2;while(container.children.length>batch.length)container.lastElementChild.remove();
- batch.forEach((m,i)=>{const button=existing[i]||document.createElement('button');button.className='batch-item';button.setAttribute('aria-label',`Select snowflake ${i+1}`);button.setAttribute('aria-pressed',String(m.s.seed===current?.s.seed));const svg=button.querySelector('svg')||document.createElementNS('http://www.w3.org/2000/svg','svg'),path=svg.querySelector('path')||document.createElementNS(svg.namespaceURI,'path');svg.setAttribute('viewBox',`${m.bounds.minX-5} ${-m.bounds.maxY-5} ${m.width+10} ${m.height+10}`);svg.setAttribute('aria-hidden','true');path.setAttribute('d',outline(m));path.setAttribute('fill-rule','evenodd');if(!path.parentNode)svg.append(path);const label=button.querySelector('span')||document.createElement('span');label.textContent=`${i+1}${m.valid?'':' · Too large'}`;if(!svg.parentNode)button.append(svg,label);button.onclick=()=>{render(m.s);message(`Snowflake ${i+1} of ${batch.length} selected. Settings and downloads apply to this snowflake.`);};if(!button.parentNode)container.append(button);});
+ batch.forEach((m,i)=>{const button=existing[i]||document.createElement('button');button.className='batch-item';button.setAttribute('aria-label',`Select snowflake ${i+1}`);button.setAttribute('aria-pressed',String(m.s.seed===current?.s.seed));const svg=button.querySelector('svg')||document.createElementNS('http://www.w3.org/2000/svg','svg'),path=svg.querySelector('path')||document.createElementNS(svg.namespaceURI,'path');svg.setAttribute('viewBox',`${m.bounds.minX-5} ${-m.bounds.maxY-5} ${m.width+10} ${m.height+10}`);svg.setAttribute('aria-hidden','true');path.setAttribute('d',outline(m));path.setAttribute('fill-rule','evenodd');if(!path.parentNode)svg.append(path);const label=button.querySelector('span')||document.createElement('span');label.textContent=`${i+1}${m.valid?'':m.issue==='text'?' · Text too small':' · Too large'}`;if(!svg.parentNode)button.append(svg,label);button.onclick=()=>{render(m.s);message(`Snowflake ${i+1} of ${batch.length} selected. Settings and downloads apply to this snowflake.`);};if(!button.parentNode)container.append(button);});
 }
 function message(t){$('status').textContent=t;}
 function url(s){return `${location.origin}/snowflake?${encode(s)}`;}
@@ -15,15 +15,16 @@ function render(s,record=true){
  if(record){history=history.slice(0,index+1);history.push({...m.s});index++;}
  for(const [k,v] of Object.entries(m.s))form.elements[k].value=v;
  const textMode=m.s.mode==='text',scriptMode=textMode&&m.s.font!=='stroke',hasText=m.s.mode!=='random';$('text-control').hidden=$('text-hint').hidden=!hasText;form.elements.text.required=hasText;
- $('font-control').hidden=!textMode;$('text-size-control').hidden=$('text-position-control').hidden=!scriptMode;
+ $('font-control').hidden=!textMode;$('text-size-control').hidden=$('text-position-control').hidden=$('text-layout-control').hidden=$('letter-spacing-control').hidden=!scriptMode;
  form.elements.text.maxLength=textMode?12:120;form.elements.text.placeholder=textMode?'e.g. Melissa or Joy':'e.g. full fern or delicate crystal';
- $('text-hint').textContent=textMode?(scriptMode?'Mixed-case script is mirrored across six arms. Adjust height and position for a fuller or more open shape.':'Original block lettering repeats in six arms. Longer text needs a larger diameter.'):'Create a repeatable abstract design from up to 120 characters. Try “full fern” or “delicate crystal”. Runs locally; letters are not printed.';
+ $('text-hint').textContent=textMode?(scriptMode?(m.s.textLayout==='single'?'One readable word on each arm. Lato and Bree Serif work well with capitals.':'Mirrored copies create a decorative pattern. Use mixed case for script fonts; increase letter spacing if letters merge.'):'Original block lettering repeats in six arms. Longer text needs a larger diameter.'):'Create a repeatable abstract design from up to 120 characters. Try “full fern” or “delicate crystal”. Runs locally; letters are not printed.';
  $('fullness-hint').hidden=textMode;
  for(const name of ['complexity','fullness','pattern'])form.elements[name].closest('label').hidden=textMode;
  const b=m.bounds,pad=10;$('preview').setAttribute('viewBox',`${b.minX-pad} ${-b.maxY-pad} ${m.width+pad*2} ${m.height+pad*2}`);
  $('flake').setAttribute('d',outline(m));
  const match=batch.findIndex(item=>item.s.seed===m.s.seed);if(match>=0)batch[match]=m;gallery();
  $('dimensions').textContent=`${m.width.toFixed(1)} × ${m.height.toFixed(1)} mm`;
+ $('letter-spacing-value').value=`${m.s.letterSpacing}%`;
  $('text-size-value').value=`${m.s.textSize}%`;$('text-position-value').value=m.s.textPosition;
  $('complexity-value').value=m.s.complexity;$('fullness-value').value=`${m.s.fullness}%`;$('branch-value').value=`${m.s.branch} mm`;
  $('design-number').textContent=`DESIGN ${index+1}`;
@@ -32,7 +33,8 @@ function render(s,record=true){
  window.history.replaceState(null,'',url(m.s));
 }
 form.addEventListener('input',()=>{if(!form.checkValidity())$('stl').disabled=$('three-mf').disabled=true;});
-form.addEventListener('change',event=>{try{if(event.target.name==='mode'){const mode=form.elements.mode.value,hasText=mode!=='random';$('text-control').hidden=$('text-hint').hidden=!hasText;form.elements.text.required=hasText;form.elements.text.maxLength=mode==='text'?12:120;if(mode==='text'&&current.s.mode!=='text'&&form.elements.font.value==='stroke')form.elements.font.value='montecarlo';if(hasText&&!form.elements.text.value)form.elements.text.value=mode==='text'?'Melissa':'FULL FERN';if(mode==='text')form.elements.text.value=form.elements.text.value.slice(0,12);}
+form.addEventListener('change',event=>{try{if(event.target.name==='mode'){const mode=form.elements.mode.value,hasText=mode!=='random';$('text-control').hidden=$('text-hint').hidden=!hasText;form.elements.text.required=hasText;form.elements.text.maxLength=mode==='text'?12:120;if(mode==='text'&&current.s.mode!=='text'&&form.elements.font.value==='stroke'){form.elements.font.value='lato';form.elements.textLayout.value='single';form.elements.letterSpacing.value='10';}if(hasText&&!form.elements.text.value)form.elements.text.value=mode==='text'?'Melissa':'FULL FERN';if(mode==='text')form.elements.text.value=form.elements.text.value.slice(0,12);}
+if(event.target.name==='font'&&['lato','breeserif'].includes(form.elements.font.value)&&!['lato','breeserif'].includes(current.s.font)){form.elements.textLayout.value='single';form.elements.letterSpacing.value='10';}
 if(!form.reportValidity()){$('stl').disabled=$('three-mf').disabled=true;return;}render(Object.fromEntries(new FormData(form)));message('');}catch(e){message(e.message);$('stl').disabled=$('three-mf').disabled=true;}});
 $('batch-count').addEventListener('input',()=>{const n=Number($('batch-count').value);$('generate').textContent=n>1?`Generate ${n} snowflakes ✦`:'Generate another ✦';});
 $('generate').onclick=async()=>{
