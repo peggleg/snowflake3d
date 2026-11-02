@@ -23,13 +23,15 @@ Deploy only `dist-snowflake/`. See [Cloudflare deployment](CLOUDFLARE.md).
 
 ## Features
 
-- **Branch growth → Airy growth** uses longer, wider-spreading boughs with spacing checks. Offshoots shrink or are omitted if they cannot fit without closing the reserved gaps. Fullness controls spread, and complexity adds detail within the available space. **Load airy rendered example** restores the exact 100 mm, complexity-18, 1.2 mm branch example. This also works on snowflake arms in alternating layouts. Existing links retain Original branching. New compact links use recipe version 5; versions 1–4 remain readable.
+- **Natural crystal growth** is the default. It adapts the supplied workshop HTML’s branch proportions and varied angles, with Random, Stellar dendrite, Fern and Plate families. The dark stage adds warm/cool material lighting and six initial designs; colour and rotation are preview-only. The prototype’s placeholder downloads are replaced by real watertight STL and Bambu Studio 3MF exports.
+
+- **Branch growth → Airy growth** uses longer, wider-spreading boughs with spacing checks. Offshoots shrink or are omitted if they cannot fit without closing the reserved gaps. Fullness controls spread, and complexity adds detail within the available space. **Load airy rendered example** restores the exact 100 mm, complexity-18, 1.2 mm branch example. This also works on snowflake arms in alternating layouts. Older links retain their saved growth engine. New compact links use recipe version 6; versions 1–5 remain readable.
 
 - Copy design link uses a compact, versioned `?d=…` recipe with a checksum. Generated seeds are packed as bytes and default settings are omitted. Exact non-default numeric settings and text are retained; no database or third-party shortener is used. Previous long `?v=1&seed=…` links still load and are rewritten to the compact form. The immutable recipe baseline and enum ordering in `share-codec.js` must remain compatible for old codes.
 
 - **Centre shape** defaults to **Random** for new sessions. The seed chooses a solid/open star, solid/framed hexagon, solid circle/ring, petal rosette or hexagonal web. Choose a specific style to fix it, and adjust centre size from 10–30% of body diameter. Centre changes retain the surrounding seeded branch character and connect all arms. Older v1 links without centre parameters explicitly restore Original centre; choose Random in that design to opt in. The original geometry regression is retained.
 
-- Complexity now ranges from 1–18. Levels 1–9 retain the original branch geometry; 10–15 add fixed-position secondary offshoots and outer tip boughs, and 16–18 add a third branching tier. Detail strokes use a minimum width of 0.8 mm; at small sizes or large branch widths, close details can merge. This applies to random/abstract designs and the snowflake arms of alternating text layouts.
+- Complexity now ranges from 1–18. In Original branching, levels 1–9 retain the original branch geometry; 10–15 add fixed-position secondary offshoots and outer tip boughs, and 16–18 add a third branching tier. Detail strokes use a minimum width of 0.8 mm; at small sizes or large branch widths, close details can merge. This applies to random/abstract designs and the snowflake arms of alternating text layouts.
 
 - Rotate the on-screen preview by dragging, using the angle slider or 30° buttons. Keyboard left/right rotate 15°; Home or Reset view returns the hanging loop to the top. The preview fits every orientation and retains its angle while adjusting the design. Rotation is a view setting only: design links and STL/3MF geometry are unchanged.
 
@@ -68,3 +70,8 @@ The expanded Random option includes nine structures: the four original Airy outl
 
 
 All new crystal families use printable detail widths, reserved gaps and complexity-driven secondary branches. Framed leaves and plates require a real opening; internal veins are omitted when they would close it. The preview uses a crisp vector outline without a blur-producing drop shadow. Recipe version 5 records the refined crystal generator; version 4 links retain their original meshes. Fresh designs use the refined generator. The browser tab uses a local SVG snowflake icon.
+
+
+The default workshop now adapts the branch proportions and varied angles in the user-supplied `snowflake-workshop.html`. Natural crystal growth offers Random, Stellar dendrite, Fern and Plate families. Fullness builds open crystal panels that are part of the exported geometry; the source prototype's translucent fills are not used as printable faces. A dark stage, warm/cool material lighting, layered vector shading and six initial seed variants follow that reference. Material colour and preview rotation do not alter the mesh or printer settings. Real STL/3MF, fixed hanging ring, printer bounds, text layouts and legacy generators remain available. Older growth engines are under More growth options.
+
+Recipe version 6 records natural family selection and pins the new defaults. Versions 1–5 retain their previous settings and geometry. Empty or degenerate contours produced by polygon cleanup are excluded before triangulation.

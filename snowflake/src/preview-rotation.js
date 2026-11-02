@@ -2,7 +2,7 @@
 export function previewRotation(svg,shape,slider,output,reset,left,right){
  let angle=0,drag=null;
  const normalize=value=>((value%360)+360)%360;
- function set(value){angle=normalize(value);shape.setAttribute('transform',`rotate(${angle} 0 0)`);const display=Math.round(angle)%360;slider.value=String(display);output.value=`${display}°`;svg.setAttribute('aria-label',`Snowflake preview rotated ${display} degrees. Drag or use arrow keys to rotate.`);}
+ function set(value){angle=normalize(value);for(const layer of [shape,...svg.querySelectorAll('[data-preview-layer]')])layer.setAttribute('transform',`rotate(${angle} 0 0)`);const display=Math.round(angle)%360;slider.value=String(display);output.value=`${display}°`;svg.setAttribute('aria-label',`Snowflake preview rotated ${display} degrees. Drag or use arrow keys to rotate.`);}
  function position(event){const matrix=svg.getScreenCTM();if(!matrix)return null;const point=new DOMPoint(event.clientX,event.clientY).matrixTransform(matrix.inverse());return {angle:Math.atan2(point.y,point.x)*180/Math.PI,radius:Math.hypot(point.x,point.y)};}
  slider.addEventListener('input',()=>set(Number(slider.value)));
  reset.addEventListener('click',()=>set(0));left.addEventListener('click',()=>set(angle-30));right.addEventListener('click',()=>set(angle+30));

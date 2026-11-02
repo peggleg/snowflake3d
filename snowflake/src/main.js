@@ -29,16 +29,19 @@ function render(s,record=true){
  $('font-control').hidden=!textMode;$('text-size-control').hidden=$('text-position-control').hidden=$('text-layout-control').hidden=$('letter-spacing-control').hidden=!scriptMode;
  form.elements.text.maxLength=textMode?12:120;form.elements.text.placeholder=textMode?'text test':'e.g. full fern or delicate crystal';
  $('text-hint').textContent=textMode?(scriptMode?(flowing?'Flowing mirrored script, using name case for readability. Reduce letter weight for a more open pattern.':m.s.textLayout==='single'?'One readable word on each arm. Lato and Bree Serif work well with capitals.':'Mirrored copies create a decorative pattern. Use mixed case for script fonts; increase letter spacing if letters merge.'):'Original block lettering repeats in six arms. Longer text needs a larger diameter.'):'Create a repeatable abstract design from up to 120 characters. Try “full fern” or “delicate crystal”. Runs locally; letters are not printed.';
+ $('growth-options').hidden=textMode&&!mixed;
  $('fullness-hint').hidden=$('complexity-hint').hidden=$('growth-control').hidden=$('airy-example').hidden=textMode&&!mixed;
+ $('natural-style-control').hidden=m.s.growth!=='natural'||(textMode&&!mixed);
  $('silhouette-control').hidden=m.s.growth!=='airy'||(textMode&&!mixed);
- $('complexity-hint').textContent=m.s.growth==='airy'?'Detail is added only where a clear gap remains. Increase diameter or reduce branch thickness to fit finer offshoots.':'10–18 add nested offshoots and tip branches. For finer detail, use a larger diameter or thinner branches.';
- $('fullness-hint').textContent=m.s.growth==='airy'?'Fullness spreads the main boughs into the spaces between arms.':'Turn up for broader outer branches and shorter bare tips.';
+ $('complexity-hint').textContent=m.s.growth==='natural'?'Branch angles and lengths vary with the seed. Higher complexity adds finer offshoots.':m.s.growth==='airy'?'Detail is added only where a clear gap remains. Increase diameter or reduce branch thickness to fit finer offshoots.':'10–18 add nested offshoots and tip branches. For finer detail, use a larger diameter or thinner branches.';
+ $('fullness-hint').textContent=m.s.growth==='natural'?'Spreads the branches and introduces open crystal panels.':m.s.growth==='airy'?'Fullness spreads the main boughs into the spaces between arms.':'Turn up for broader outer branches and shorter bare tips.';
  for(const name of ['complexity','fullness','pattern'])form.elements[name].closest('label').hidden=textMode&&!mixed;
- form.elements.pattern.closest('label').hidden=(textMode&&!mixed)||m.s.growth==='airy';
+ form.elements.pattern.closest('label').hidden=(textMode&&!mixed)||m.s.growth!=='original';
  if(mixed)$('text-hint').textContent='Three text arms alternate with three snowflake branches. Complexity, fullness and branch thickness adjust the snowflake branches.';
  const extent=m.loops.reduce((r,loop)=>loop.reduce((r,[x,y])=>Math.max(r,Math.hypot(x,y)),r),0)+8;
  $('preview').setAttribute('viewBox',`${-extent} ${-extent} ${extent*2} ${extent*2}`);
- $('flake').setAttribute('d',outline(m));rotation.refresh();
+ $('flake-depth').parentElement.setAttribute('transform',`translate(0 ${m.s.thickness*.22})`);
+ for(const id of ['flake','flake-depth','flake-light'])$(id).setAttribute('d',outline(m));rotation.refresh();
  const match=batch.findIndex(item=>item.s.seed===m.s.seed);if(match>=0)batch[match]=m;gallery();
  $('dimensions').textContent=`${m.width.toFixed(1)} × ${m.height.toFixed(1)} mm`;
  $('text-weight-value').value=`${m.s.textWeight.toFixed(2)} mm`;
@@ -73,5 +76,8 @@ $('generate').onclick=async()=>{
 $('previous').onclick=()=>{if(index>0)render(history[--index],false);};$('next').onclick=()=>{if(index<history.length-1)render(history[++index],false);};
 $('copy').onclick=async()=>{try{await navigator.clipboard.writeText(url(current.s));message('Design link copied.');}catch{message('Clipboard unavailable. Copy the design link from your address bar.');}};
 for(const [id,format,fn] of [['stl','stl',exportStl],['three-mf','3mf',export3mf]])$(id).onclick=()=>{try{const bytes=fn(current),blob=new Blob([bytes],{type:format==='stl'?'model/stl':'model/3mf'}),href=URL.createObjectURL(blob),a=document.createElement('a');a.href=href;a.download=`snowflake-${current.s.seed.replace(/[^a-z0-9_-]/gi,'_')}.${format}`;a.click();setTimeout(()=>URL.revokeObjectURL(href),10000);message(`${format.toUpperCase()} ready. Inspect the slice before printing.`);}catch(e){message(e.message);}};
-try{render(decode(location.search));}catch(e){render(defaults);message(`Invalid design link: ${e.message} Loaded the default snowflake.`);}
-window.addEventListener('popstate',()=>{try{render(decode(location.search));}catch(e){message(e.message);}});
+try{const fresh=!location.search;render(decode(location.search));if(fresh){batch=[current,...Array.from({length:5},(_,i)=>design({...current.s,seed:current.s.seed+'~'+(i+2)}))];history=batch.map(m=>({...m.s}));index=0;render(current.s,false);$('batch-count').dispatchEvent(new Event('input'));}}catch(e){render(defaults);message(`Invalid design link: ${e.message} Loaded the default snowflake.`);}
+window.addEventListener('popstate',()=>{try{const fresh=!location.search;render(decode(location.search));if(fresh){batch=[current,...Array.from({length:5},(_,i)=>design({...current.s,seed:current.s.seed+'~'+(i+2)}))];history=batch.map(m=>({...m.s}));index=0;render(current.s,false);$('batch-count').dispatchEvent(new Event('input'));}}catch(e){message(e.message);}});
+
+const materials=[['Hearth','#ffb066','#9fd8f5'],['Copper','#f0b581','#b96b44'],['Pine','#a2dcc5','#438b72'],['Ice','#f2fbff','#8fc6e0'],['Plum','#e5bde0','#936990'],['Cream','#fff6e4','#cfbb96']];
+materials.forEach(([name,left,right],i)=>{const b=document.createElement('button');b.type='button';b.setAttribute('aria-label',name);b.setAttribute('aria-pressed',String(i===0));b.style.background=`linear-gradient(135deg,${left},${right})`;b.onclick=()=>{$('material-left').setAttribute('stop-color',left);$('material-right').setAttribute('stop-color',right);for(const button of $('material-swatches').children)button.setAttribute('aria-pressed',String(button===b));};$('material-swatches').append(b);});

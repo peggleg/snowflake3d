@@ -9,7 +9,7 @@ function checkMesh(m){
  for(const e of edges.values()){assert.equal(e.count,2,'watertight');assert.equal(e.dir,0,'consistent winding');}assert.ok(volume>0,'outward normals');const seen=new Set(),stack=[0];while(stack.length){const a=stack.pop();if(seen.has(a))continue;seen.add(a);stack.push(...adj.get(a));}assert.equal(seen.size,m.vertices.length/3,'one connected surface');
 }
 test('seed and all settings round-trip deterministically',()=>{const m=design(defaults);assert.deepEqual(design(decode('?'+encode(defaults))).vertices,m.vertices);assert.notDeepEqual(design({...defaults,seed:'other'}).vertices,m.vertices);assert.deepEqual(decode('?'+encode(defaults)),defaults);});
-test('mesh is one watertight solid across seed, pattern and size extremes',()=>{for(let i=0;i<24;i++)for(const pattern of ['mixed','open','lattice'])checkMesh(design({seed:`test-${i}`,diameter:i%2?40:245,thickness:i%2?1:8,branch:i%2?4:1.2,complexity:i%9+1,pattern,printer:'a1'}));});
+test('mesh is one watertight solid across seed, pattern and size extremes',()=>{for(let i=0;i<24;i++)for(const pattern of ['mixed','open','lattice'])checkMesh(design({growth:'original',seed:`test-${i}`,diameter:i%2?40:245,thickness:i%2?1:8,branch:i%2?4:1.2,complexity:i%9+1,pattern,printer:'a1'}));});
 test('hanging bore stays 4 mm and ring reaches exactly R+7 across sizes',()=>{for(const diameter of [40,100,245]){const m=design({diameter,printer:'a1'});assert.equal(m.bounds.maxY,diameter/2+7);const bore=m.loops.find(l=>l.every(([x,y])=>Math.abs(x)<=2.001&&Math.abs(y-(diameter/2+3))<=2.001));assert.ok(bore);assert.equal(Math.max(...bore.map(p=>p[0]))-Math.min(...bore.map(p=>p[0])),4);}});
 test('actual bounds including ring enforce printer margin and block both exports',()=>{const m=design({diameter:245});assert.equal(m.valid,false);assert.throws(()=>exportStl(m));assert.throws(()=>export3mf(m));assert.equal(design({diameter:245,printer:'a1'}).valid,true);assert.throws(()=>settings({diameter:NaN}));assert.throws(()=>settings({printer:'x'}));});
 test('STL length and complete project archive settings',()=>{const m=design(defaults),bytes=exportStl(m);assert.equal(bytes.length,84+m.faces.length/3*50);assert.equal(new DataView(bytes.buffer).getUint32(80,true),m.faces.length/3);for(const printer of ['mini','a1']){const files=projectFiles(design({printer})),p=JSON.parse(files['Metadata/project_settings.config']);assert.equal(p.sparse_infill_pattern,'gyroid');assert.equal(p.sparse_infill_density,'8%');assert.equal(p.wall_loops,'2');assert.equal(p.top_shell_layers,'3');assert.equal(p.bottom_shell_layers,'3');assert.equal(p.top_shell_thickness,'0');assert.equal(p.bottom_shell_thickness,'0');assert.ok(p.machine_start_gcode);assert.ok(p.machine_end_gcode);assert.ok(Object.keys(p).length>400);assert.ok(files['Metadata/model_settings.config']);assert.ok(files['3D/3dmodel.model'].includes('transform='));assert.equal(new DataView(export3mf(m).buffer).getUint32(0,true),0x04034b50);}});
@@ -25,7 +25,7 @@ test('batch generation provides 24 unique reproducible seeds and preserves share
 });
 
 test('zero fullness preserves original v1 geometry and old links',async()=>{
- const {createHash}=await import('node:crypto');const m=design({seed:'winter-2026',centre:'original'});
+ const {createHash}=await import('node:crypto');const m=design({seed:'winter-2026',centre:'original',growth:'original',branch:2,fullness:0});
  assert.equal(createHash('sha256').update(new Uint8Array(m.vertices.buffer)).update(new Uint8Array(m.faces.buffer)).digest('hex'),'5e0449ed9b97473c088561525191f8243cdb822b6529c9232d4cf81bb99fa99f');
  assert.equal(decode('?v=1&seed=winter-2026').fullness,0);
  const s={...defaults,fullness:80};assert.deepEqual(decode('?'+encode(s)),s);assert.throws(()=>settings({fullness:101}));assert.throws(()=>settings({fullness:NaN}));
@@ -217,4 +217,11 @@ test('every crystal family gains printable detail at higher complexity',async()=
   const low=design({...s,complexity:3}),high=design({...s,complexity:18});
   assert.ok(high.faces.length>low.faces.length,`${silhouette} must gain detail`);checkMesh(high);
  }
+});
+test('natural workshop families export closed connected meshes across seeds and dimensions',()=>{
+ for(const naturalStyle of ['random','stellar','fern','plate'])for(const [diameter,branch] of [[40,4],[100,1.6],[245,1.2]])for(const complexity of [1,5,18]){
+  const s=settings({growth:'natural',naturalStyle,seed:`natural-${naturalStyle}-${complexity}`,diameter,branch,complexity,fullness:complexity===1?0:100,printer:'a1'}),m=design(s);
+  checkMesh(m);assert.equal(m.bounds.maxY,diameter/2+7);assert.deepEqual(design(decode(encode(s))).vertices,m.vertices);
+ }
+ for(const centre of ['star-frame','hex-frame','rosette','web'])checkMesh(design({growth:'natural',centre,complexity:18,fullness:100,branch:1.2}));
 });
