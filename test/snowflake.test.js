@@ -122,3 +122,13 @@ test('alternating text and branch layouts preserve connectedness, fixed bore and
  const variants=batchSettings({...base,font:'courgette'},24);assert.ok(variants.every(s=>s.armLayout==='alternating'));
  assert.throws(()=>settings({armLayout:'bad'}));assert.equal(decode('?v=1&seed=winter-2026').armLayout,'all');
 });
+
+test('extended complexity creates connected watertight hierarchical branches at size extremes',()=>{
+ for(const complexity of [10,12,15,16,18])for(const diameter of [40,100,245])for(const pattern of ['open','mixed','lattice']){
+  const m=design({seed:`crystal-${diameter}`,complexity,diameter,branch:diameter===40?4:1.2,pattern,fullness:60,printer:'a1'});checkMesh(m);assert.equal(m.bounds.maxY,diameter/2+7);
+ }
+ for(const mode of ['prompt','text']){
+  const s=settings({mode,armLayout:'alternating',font:'courgette',textLayout:'flowing',text:mode==='prompt'?'full fern':'text test',complexity:18,branch:1.2}),m=design(s);checkMesh(m);assert.deepEqual(design(decode('?'+encode(s))).vertices,m.vertices);
+ }
+ const low=design({complexity:9,branch:1.2}),mid=design({complexity:12,branch:1.2}),high=design({complexity:18,branch:1.2});assert.ok(mid.faces.length>low.faces.length);assert.ok(high.faces.length>mid.faces.length);assert.throws(()=>settings({complexity:19}));
+});

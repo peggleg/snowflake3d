@@ -24,7 +24,7 @@ function render(s,record=true){
  $('font-control').hidden=!textMode;$('text-size-control').hidden=$('text-position-control').hidden=$('text-layout-control').hidden=$('letter-spacing-control').hidden=!scriptMode;
  form.elements.text.maxLength=textMode?12:120;form.elements.text.placeholder=textMode?'text test':'e.g. full fern or delicate crystal';
  $('text-hint').textContent=textMode?(scriptMode?(flowing?'Flowing mirrored script, using name case for readability. Reduce letter weight for a more open pattern.':m.s.textLayout==='single'?'One readable word on each arm. Lato and Bree Serif work well with capitals.':'Mirrored copies create a decorative pattern. Use mixed case for script fonts; increase letter spacing if letters merge.'):'Original block lettering repeats in six arms. Longer text needs a larger diameter.'):'Create a repeatable abstract design from up to 120 characters. Try “full fern” or “delicate crystal”. Runs locally; letters are not printed.';
- $('fullness-hint').hidden=textMode&&!mixed;
+ $('fullness-hint').hidden=$('complexity-hint').hidden=textMode&&!mixed;
  for(const name of ['complexity','fullness','pattern'])form.elements[name].closest('label').hidden=textMode&&!mixed;
  if(mixed)$('text-hint').textContent='Three text arms alternate with three snowflake branches. Complexity, fullness and branch thickness adjust the snowflake branches.';
  const extent=m.loops.reduce((r,loop)=>loop.reduce((r,[x,y])=>Math.max(r,Math.hypot(x,y)),r),0)+8;

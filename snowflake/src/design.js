@@ -2,12 +2,13 @@ import ClipperLib from 'clipper-lib';
 import earcut from 'earcut';
 import {lettering,normalizeText} from './lettering.js';
 import {scriptLettering} from './script-lettering.js';
+import {branchDetail} from './branch-detail.js';
 import {conformTriangles} from './triangulate.js';
 export const defaults={seed:'winter-2026',mode:'random',armLayout:'all',text:'text test',font:'stroke',textLayout:'mirrored',letterSpacing:0,textWeight:.65,textSize:100,textPosition:0,diameter:100,thickness:3,complexity:5,branch:2,fullness:0,pattern:'mixed',printer:'mini'};
 export const printers={mini:{name:'Bambu Lab A1 mini',size:180},a1:{name:'Bambu Lab A1',size:256}};
 export function settings(input={}){
  const s={...defaults,...input};
- for(const [k,min,max] of [['diameter',40,245],['thickness',1,8],['complexity',1,9],['branch',1.2,4],['fullness',0,100],['textSize',60,150],['textPosition',-10,10],['letterSpacing',0,40],['textWeight',.5,1.2]]){s[k]=Number(s[k]);if(!Number.isFinite(s[k])||s[k]<min||s[k]>max)throw Error(`Invalid ${k}: use ${min}–${max}.`);}
+ for(const [k,min,max] of [['diameter',40,245],['thickness',1,8],['complexity',1,18],['branch',1.2,4],['fullness',0,100],['textSize',60,150],['textPosition',-10,10],['letterSpacing',0,40],['textWeight',.5,1.2]]){s[k]=Number(s[k]);if(!Number.isFinite(s[k])||s[k]<min||s[k]>max)throw Error(`Invalid ${k}: use ${min}–${max}.`);}
  if(!Number.isInteger(s.complexity)||!printers[s.printer]||!['mixed','open','lattice'].includes(s.pattern))throw Error('Invalid design settings.');
  if(!['random','text','prompt'].includes(s.mode))throw Error('Invalid design mode.');
  if(!['stroke','montecarlo','niconne','lato','breeserif','courgette','berkshireswash'].includes(s.font))throw Error('Invalid text font.');
@@ -52,7 +53,7 @@ export function design(input){
   for(const side of [-1,1])line(point(R*.93,0),point(R*.96,side*length),Math.max(.8,w*.55));
   continue;
  }
- for(let j=0;j<s.complexity;j++){
+ for(let j=0;j<Math.min(s.complexity,9);j++){
  const t=.16+j*.068+(slots[j]-.5)*.035,base=R*t,len=R*(.10+slots[10+j]*.14)*(1-t)*(lush?1.4:fine?.85:1),slope=.65+slots[20+j]*.6;
  for(const side of [-1,1]){
  const a=point(base,0),b=point(Math.min(R-w,base+len),side*len*slope);line(a,b,w*.75);
@@ -60,6 +61,7 @@ export function design(input){
  if(j<3&&s.complexity>5){const c=point(base+len*.55,side*len*slope*.55);line(c,point(base+len*.45,side*(len*slope*.55+R*.045)),w*.65);}
  }
  }
+ if(s.complexity>9)branchDetail({radius:R,width:w,level:s.complexity-9,slots,point,line});
  // Extra paired boughs fill the outer arms; the original seed slots are unchanged.
  // At zero this adds no geometry, preserving every existing v1 design link.
  const full=Math.max(s.fullness/100,lush?.8:0);
@@ -79,11 +81,11 @@ export function design(input){
  const clip=new ClipperLib.Clipper();clip.AddPaths(shapes,ClipperLib.PolyType.ptSubject,true);let union=new ClipperLib.Paths();clip.Execute(ClipperLib.ClipType.ctUnion,union,ClipperLib.PolyFillType.pftNonZero,ClipperLib.PolyFillType.pftNonZero);
  const cut=new ClipperLib.Clipper();cut.AddPaths(union,ClipperLib.PolyType.ptSubject,true);cut.AddPath(path(circle(0,cy,2)),ClipperLib.PolyType.ptClip,true);const tree=new ClipperLib.PolyTree();cut.Execute(ClipperLib.ClipType.ctDifference,tree,ClipperLib.PolyFillType.pftNonZero,ClipperLib.PolyFillType.pftNonZero);
  if(tree.Childs().length!==1)throw Error('Design must be one connected ornament.');
- const outer=tree.Childs()[0],loops=[outer.Contour(),...outer.Childs().map(n=>n.Contour())].map(p=>letters||script?ClipperLib.Clipper.CleanPolygon(p,2):p).map(p=>p.map(v=>[v.X/scale,v.Y/scale]));
+ const outer=tree.Childs()[0],loops=[outer.Contour(),...outer.Childs().map(n=>n.Contour())].map(p=>letters||script||s.complexity>9?ClipperLib.Clipper.CleanPolygon(p,2):p).map(p=>p.map(v=>[v.X/scale,v.Y/scale]));
  const flat=[],holes=[];for(let i=0;i<loops.length;i++){if(i)holes.push(flat.length/2);for(const p of loops[i])flat.push(...p);}
  // Integer coordinates prevent floating-point sliver triangles at collinear intersections.
- let top=earcut(s.fullness>0||letters||script||prompt?flat.map(v=>Math.round(v*scale)):flat,holes);
- if(letters||script)top=conformTriangles(flat,top);
+ let top=earcut(s.fullness>0||letters||script||prompt||s.complexity>9?flat.map(v=>Math.round(v*scale)):flat,holes);
+ if(letters||script||s.complexity>9)top=conformTriangles(flat,top);
  const n=flat.length/2,vertices=[],faces=[];
  for(const z of [0,s.thickness])for(let i=0;i<n;i++)vertices.push(flat[i*2],flat[i*2+1],z);
  for(let i=0;i<top.length;i+=3){const [a,b,c]=top.slice(i,i+3);faces.push(a,c,b,a+n,b+n,c+n);}
