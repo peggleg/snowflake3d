@@ -3,6 +3,7 @@ import {encodeCompact,decodeCompact} from './share-codec.js';
 import earcut from 'earcut';
 import {lettering,normalizeText} from './lettering.js';
 import {scriptLettering} from './script-lettering.js';
+import {textCentrePlan} from './centre-text.js';
 import {centreChoices,centrePlan,replaceCentre} from './centre.js';
 import {crystalArm as legacyCrystalArm} from './crystal-arms-v4.js';
 import {crystalArm,crystalFamilies} from './crystal-arms.js';
@@ -10,7 +11,7 @@ import {balancedArm,resolveSilhouette} from './airy-growth.js';
 import {naturalArm} from './natural-growth.js';
 import {branchDetail} from './branch-detail.js';
 import {conformTriangles} from './triangulate.js';
-export const defaults={seed:'winter-2026',mode:'random',armLayout:'all',growth:'airy',naturalStyle:'random',silhouette:'random',crystalQuality:'refined',centre:'random',centreSize:18,text:'text test',font:'stroke',textLayout:'mirrored',letterSpacing:0,textWeight:.65,textSize:100,textPosition:0,diameter:100,thickness:3,complexity:5,branch:1.6,fullness:30,pattern:'mixed',printer:'mini'};
+export const defaults={seed:'winter-2026',mode:'random',armLayout:'all',growth:'airy',naturalStyle:'random',silhouette:'random',crystalQuality:'refined',centre:'random',centreText:'TEXT',centreFont:'lato',centreSize:18,text:'text test',font:'stroke',textLayout:'mirrored',letterSpacing:0,textWeight:.65,textSize:100,textPosition:0,diameter:100,thickness:3,complexity:5,branch:1.6,fullness:30,pattern:'mixed',printer:'mini'};
 export const printers={mini:{name:'Bambu Lab A1 mini',size:180},a1:{name:'Bambu Lab A1',size:256}};
 export function settings(input={}){
  const s={...defaults,...input};
@@ -18,8 +19,11 @@ export function settings(input={}){
  if(!Number.isInteger(s.complexity)||!printers[s.printer]||!['mixed','open','lattice'].includes(s.pattern))throw Error('Invalid design settings.');
  if(!['random','text','prompt'].includes(s.mode))throw Error('Invalid design mode.');
  if(!['stroke','montecarlo','niconne','lato','breeserif','courgette','berkshireswash'].includes(s.font))throw Error('Invalid text font.');
- if(!['random','original',...centreChoices].includes(s.centre))throw Error('Invalid centre shape.');
+ if(!['random','original','text',...centreChoices].includes(s.centre))throw Error('Invalid centre shape.');
  if(!['random-all','random','legacy','star','fern','crystal','rounded',...crystalFamilies].includes(s.silhouette))throw Error('Invalid outline shape.');
+ s.centreText=String(s.centreText).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,' ');
+ if(s.centreText.length>12||!['lato','breeserif'].includes(s.centreFont))throw Error('Use up to 12 characters for the centre text.');
+ if(s.centre==='text'&&(!/[A-Za-z0-9]/.test(s.centreText)||!/^[A-Za-z0-9 \'-]+$/.test(s.centreText)))throw Error('Enter centre text using letters, numbers, spaces or hyphens.');
  if(!['random','stellar','fern','plate'].includes(s.naturalStyle))throw Error('Invalid natural crystal style.');
  if(!['original','refined'].includes(s.crystalQuality))throw Error('Invalid crystal recipe.');
  if(!['original','airy','natural'].includes(s.growth))throw Error('Invalid branch growth style.');
@@ -42,7 +46,7 @@ export function design(input){
  const s=settings(input),rng=random(s.mode==='prompt'?`text:${s.text}|${s.seed}`:s.seed),slots=Array.from({length:100},rng),R=s.diameter/2,w=s.branch,shapes=[];
  const naturalCentres=['hex-frame','hexagon','ring','rosette','solid-star','star-frame','web','circle'];
  const centreChoice=s.growth==='natural'&&s.centre==='random'?naturalCentres[Math.min(7,Math.floor(slots[90]*8))]:s.centre;
- const centre=s.centre==='original'?null:centrePlan({choice:centreChoice,radius:R*s.centreSize/100,branch:w,slots,matched:s.growth==='natural'||s.growth==='airy'&&s.silhouette!=='legacy'});
+ const centre=s.centre==='original'?null:s.centre==='text'?textCentrePlan({text:s.centreText,font:s.centreFont,radius:R*s.centreSize/100,branch:w}):centrePlan({choice:centreChoice,radius:R*s.centreSize/100,branch:w,slots,matched:s.growth==='natural'||s.growth==='airy'&&s.silhouette!=='legacy'});
  const prompt=s.mode==='prompt',lush=prompt&&/FULL|DENSE|FERN|BROAD|LACE|LEAF/.test(s.text),fine=prompt&&/DELICATE|FINE|THIN|AIRY/.test(s.text);
  const script=s.mode==='text'&&s.font!=='stroke'?scriptLettering(s.text,R,w,s.font,s.textSize*(.96+slots[81]*.08),s.textPosition+(slots[82]-.5)*4,s.textLayout,s.letterSpacing,s.textWeight):null;
  const letters=s.mode==='text'&&!script?lettering(s.text,R,w):null;
@@ -109,8 +113,8 @@ export function design(input){
  for(let i=0;i<top.length;i+=3){const [a,b,c]=top.slice(i,i+3);faces.push(a,c,b,a+n,b+n,c+n);}
  let offset=0;for(const loop of loops){for(let j=0;j<loop.length;j++){const a=offset+j,b=offset+(j+1)%loop.length;faces.push(a,b,a+n,b,b+n,a+n);}offset+=loop.length;}
  const xs=flat.filter((_,i)=>i%2===0),ys=flat.filter((_,i)=>i%2===1),bounds={minX:Math.min(...xs),maxX:Math.max(...xs),minY:Math.min(...ys),maxY:Math.max(...ys)};
- const width=bounds.maxX-bounds.minX,height=bounds.maxY-bounds.minY,limit=printers[s.printer].size-4,fits=width<=limit&&height<=limit,valid=fits&&(!letters||letters.printable)&&(!script||script.printable);
- const issue=!fits?'plate':(letters&&!letters.printable)||(script&&!script.printable)?'text':'';
+ const width=bounds.maxX-bounds.minX,height=bounds.maxY-bounds.minY,limit=printers[s.printer].size-4,fits=width<=limit&&height<=limit,valid=fits&&(!letters||letters.printable)&&(!script||script.printable)&&centre?.printable!==false;
+ const issue=!fits?'plate':(letters&&!letters.printable)||(script&&!script.printable)?'text':centre?.printable===false?'centreText':'';
  return {s,loops,vertices:new Float64Array(vertices),faces:new Uint32Array(faces),bounds,width,height,valid,limit,issue,centreKind:centre?.kind||'original'};
 }
 export function encode(s){return 'd='+encodeCompact(settings(s));}

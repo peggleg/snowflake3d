@@ -37,8 +37,8 @@ test('fuller meshes stay connected and closed with fixed ring at dimension extre
   const cy=m.s.diameter/2+3,bore=m.loops.find(l=>l.every(([x,y])=>Math.abs(x)<=2.001&&Math.abs(y-cy)<=2.001));assert.ok(bore);
  }
 });
-test('fullness adds outer coverage without changing the seed',()=>{
- const open=design({...defaults,fullness:0}),full=design({...defaults,fullness:100});
+test('Original growth fullness adds material coverage without changing the seed',()=>{
+ const open=design({...defaults,growth:'original',branch:2,fullness:0}),full=design({...defaults,growth:'original',branch:2,fullness:100});
  const area=m=>Math.abs(m.loops.reduce((sum,l)=>sum+l.reduce((a,p,i)=>{const q=l[(i+1)%l.length];return a+p[0]*q[1]-q[0]*p[1];},0)/2,0));
  assert.equal(open.s.seed,full.s.seed);assert.ok(area(full)>area(open)*1.3);assert.notDeepEqual(open.vertices,full.vertices);
 });
@@ -231,4 +231,13 @@ test('Airy is the new default and open text presets remain connected printable m
   const s=settings({mode:'text',growth:'airy',font,text:['lato','breeserif'].includes(font)?'Snow':'Text Test',armLayout,textLayout:['lato','breeserif'].includes(font)?'single':'flowing',textWeight:.55,letterSpacing:15,textSize:100,branch:1.2});
   const m=design(s);checkMesh(m);assert.equal(m.valid,true);assert.deepEqual(design(decode(encode(s))).vertices,m.vertices);
  }
+});
+
+test('centre text is a connected printable bridge with six branch joins and preserved counters',async()=>{
+ for(const centreFont of ['lato','breeserif'])for(const centreText of ['TEXT','LOVE','Julia','2026','A-B'])for(const growth of ['airy','natural','original']){
+  const s=settings({centre:'text',centreText,centreFont,growth,centreSize:24,branch:1.2}),m=design(s);checkMesh(m);assert.equal(m.valid,true);assert.equal(m.centreKind,'text');assert.deepEqual(design(decode(encode(s))).vertices,m.vertices);
+ }
+ for(const [diameter,branch,centreSize]of [[40,4,10],[245,1.2,30]]){const m=design({centre:'text',centreText:'LOVE',diameter,branch,centreSize,printer:'a1'});checkMesh(m);assert.equal(m.bounds.maxY,diameter/2+7);}
+ const small=design({centre:'text',centreText:'LONG CENTRE',diameter:40,centreSize:10});assert.equal(small.valid,false);assert.equal(small.issue,'centreText');assert.throws(()=>exportStl(small));assert.throws(()=>export3mf(small));
+ assert.throws(()=>settings({centre:'text',centreText:''}));assert.throws(()=>settings({centre:'text',centreText:'bad/text'}));
 });

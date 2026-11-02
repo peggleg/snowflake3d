@@ -1,7 +1,7 @@
 import ClipperLib from 'clipper-lib';
 const SCALE=10000;
 export const centreChoices=['solid-star','star-frame','hexagon','hex-frame','circle','ring','rosette','web'];
-export const centreLabels={'solid-star':'Solid star','star-frame':'Open star',hexagon:'Solid hexagon','hex-frame':'Hexagon frame',circle:'Solid circle',ring:'Circular ring',rosette:'Petal rosette',web:'Hexagonal web',original:'Original centre'};
+export const centreLabels={text:'Centre text','solid-star':'Solid star','star-frame':'Open star',hexagon:'Solid hexagon','hex-frame':'Hexagon frame',circle:'Solid circle',ring:'Circular ring',rosette:'Petal rosette',web:'Hexagonal web',original:'Original centre'};
 const polygon=(r,n=6,rotation=Math.PI/2)=>Array.from({length:n},(_,i)=>[Math.cos(rotation+i*Math.PI*2/n)*r,Math.sin(rotation+i*Math.PI*2/n)*r]);
 const integer=p=>p.map(([x,y])=>({X:Math.round(x*SCALE),Y:Math.round(y*SCALE)}));
 export function centrePlan({choice,radius,branch,slots,matched=false}){
