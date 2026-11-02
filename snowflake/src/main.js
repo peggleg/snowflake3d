@@ -18,7 +18,7 @@ function render(s,record=true){
  $('flake').setAttribute('d',outline(m));
  const match=batch.findIndex(item=>item.s.seed===m.s.seed);if(match>=0)batch[match]=m;gallery();
  $('dimensions').textContent=`${m.width.toFixed(1)} × ${m.height.toFixed(1)} mm`;
- $('complexity-value').value=m.s.complexity;$('branch-value').value=`${m.s.branch} mm`;
+ $('complexity-value').value=m.s.complexity;$('fullness-value').value=`${m.s.fullness}%`;$('branch-value').value=`${m.s.branch} mm`;
  $('design-number').textContent=`DESIGN ${index+1}`;
  $('fit').textContent=m.valid?`Fits ${printers[m.s.printer].name} with a 2 mm edge margin.`:`Too large for ${printers[m.s.printer].name}. Reduce diameter or choose A1. Ring is included in this check.`;
  $('stl').disabled=$('three-mf').disabled=!m.valid;$('previous').disabled=index<=0;$('next').disabled=index>=history.length-1;

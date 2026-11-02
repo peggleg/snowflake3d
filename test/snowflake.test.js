@@ -23,3 +23,22 @@ test('batch generation provides 24 unique reproducible seeds and preserves share
  assert.deepEqual(batchSettings(defaults,1),[defaults]);
  for(const count of [0,25,1.5,NaN])assert.throws(()=>batchSettings(defaults,count));
 });
+
+test('zero fullness preserves original v1 geometry and old links',async()=>{
+ const {createHash}=await import('node:crypto');const m=design({seed:'winter-2026'});
+ assert.equal(createHash('sha256').update(new Uint8Array(m.vertices.buffer)).update(new Uint8Array(m.faces.buffer)).digest('hex'),'5e0449ed9b97473c088561525191f8243cdb822b6529c9232d4cf81bb99fa99f');
+ assert.equal(decode('?v=1&seed=winter-2026').fullness,0);
+ const s={...defaults,fullness:80};assert.deepEqual(decode('?'+encode(s)),s);assert.throws(()=>settings({fullness:101}));assert.throws(()=>settings({fullness:NaN}));
+});
+test('fuller meshes stay connected and closed with fixed ring at dimension extremes',()=>{
+ for(const fullness of [10,50,100])for(const pattern of ['mixed','open','lattice'])for(let i=0;i<6;i++){
+  const m=design({seed:`full-${i}`,fullness,pattern,diameter:i%2?40:245,branch:i%2?4:1.2,complexity:i%2?1:9,printer:'a1'});checkMesh(m);
+  assert.equal(m.bounds.maxY,m.s.diameter/2+7);
+  const cy=m.s.diameter/2+3,bore=m.loops.find(l=>l.every(([x,y])=>Math.abs(x)<=2.001&&Math.abs(y-cy)<=2.001));assert.ok(bore);
+ }
+});
+test('fullness adds outer coverage without changing the seed',()=>{
+ const open=design({...defaults,fullness:0}),full=design({...defaults,fullness:100});
+ const area=m=>Math.abs(m.loops.reduce((sum,l)=>sum+l.reduce((a,p,i)=>{const q=l[(i+1)%l.length];return a+p[0]*q[1]-q[0]*p[1];},0)/2,0));
+ assert.equal(open.s.seed,full.s.seed);assert.ok(area(full)>area(open)*1.3);assert.notDeepEqual(open.vertices,full.vertices);
+});

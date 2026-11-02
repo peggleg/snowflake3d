@@ -1,10 +1,10 @@
 import ClipperLib from 'clipper-lib';
 import earcut from 'earcut';
-export const defaults={seed:'winter-2026',diameter:100,thickness:3,complexity:5,branch:2,pattern:'mixed',printer:'mini'};
+export const defaults={seed:'winter-2026',diameter:100,thickness:3,complexity:5,branch:2,fullness:0,pattern:'mixed',printer:'mini'};
 export const printers={mini:{name:'Bambu Lab A1 mini',size:180},a1:{name:'Bambu Lab A1',size:256}};
 export function settings(input={}){
  const s={...defaults,...input};
- for(const [k,min,max] of [['diameter',40,245],['thickness',1,8],['complexity',1,9],['branch',1.2,4]]){s[k]=Number(s[k]);if(!Number.isFinite(s[k])||s[k]<min||s[k]>max)throw Error(`Invalid ${k}: use ${min}–${max}.`);}
+ for(const [k,min,max] of [['diameter',40,245],['thickness',1,8],['complexity',1,9],['branch',1.2,4],['fullness',0,100]]){s[k]=Number(s[k]);if(!Number.isFinite(s[k])||s[k]<min||s[k]>max)throw Error(`Invalid ${k}: use ${min}–${max}.`);}
  if(!Number.isInteger(s.complexity)||!printers[s.printer]||!['mixed','open','lattice'].includes(s.pattern))throw Error('Invalid design settings.');
  s.seed=String(s.seed);if(!s.seed.length||s.seed.length>128)throw Error('Seed must contain 1–128 characters.');
  return s;
@@ -30,6 +30,19 @@ export function design(input){
  if(j<3&&s.complexity>5){const c=point(base+len*.55,side*len*slope*.55);line(c,point(base+len*.45,side*(len*slope*.55+R*.045)),w*.65);}
  }
  }
+ // Extra paired boughs fill the outer arms; the original seed slots are unchanged.
+ // At zero this adds no geometry, preserving every existing v1 design link.
+ const full=s.fullness/100;
+ if(full>0)for(let j=0;j<5;j++){
+  const t=.40+j*.12,advance=R*(.06+slots[50+j]*.035)*full;
+  const spread=R*(.25-j*.03)*full*(.85+slots[60+j]*.15);
+  for(const side of [-1,1]){
+   const tip=point(R*t+advance,side*spread);
+   line(point(R*t,0),tip,w*.75);
+   if(s.pattern==='lattice'||s.pattern==='mixed'&&slots[70+j]>.4)
+    line(tip,point(Math.min(R*.99,R*t+advance*2),0),w*.65);
+  }
+ }
  }
  // The ring overlaps the top arm by 1 mm; its bore is cut after the union.
  const cy=R+3;add(circle(0,cy,4));
@@ -38,7 +51,8 @@ export function design(input){
  if(tree.Childs().length!==1)throw Error('Design must be one connected ornament.');
  const outer=tree.Childs()[0],loops=[outer.Contour(),...outer.Childs().map(n=>n.Contour())].map(p=>p.map(v=>[v.X/scale,v.Y/scale]));
  const flat=[],holes=[];for(let i=0;i<loops.length;i++){if(i)holes.push(flat.length/2);for(const p of loops[i])flat.push(...p);}
- const top=earcut(flat,holes),n=flat.length/2,vertices=[],faces=[];
+ // Integer coordinates prevent floating-point sliver triangles at collinear intersections.
+ const top=earcut(s.fullness>0?flat.map(v=>Math.round(v*scale)):flat,holes),n=flat.length/2,vertices=[],faces=[];
  for(const z of [0,s.thickness])for(let i=0;i<n;i++)vertices.push(flat[i*2],flat[i*2+1],z);
  for(let i=0;i<top.length;i+=3){const [a,b,c]=top.slice(i,i+3);faces.push(a,c,b,a+n,b+n,c+n);}
  let offset=0;for(const loop of loops){for(let j=0;j<loop.length;j++){const a=offset+j,b=offset+(j+1)%loop.length;faces.push(a,b,a+n,b,b+n,a+n);}offset+=loop.length;}

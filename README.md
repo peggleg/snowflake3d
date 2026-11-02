@@ -24,7 +24,7 @@ Deploy only `dist-snowflake/`. See [Cloudflare deployment](CLOUDFLARE.md).
 ## Features
 
 - Generate 1–24 different snowflakes at a time; select a thumbnail to edit/download an individual ornament.
-- Seeded, reproducible geometry with complexity, branch width and opening controls. Previous/Next history and Copy design link. The link restores one selected ornament, not an entire batch.
+- Seeded, reproducible geometry with complexity, branch width, opening and fullness controls. Fullness adds broader boughs toward the tips; zero preserves the original design. Previous/Next history and Copy design link. The link restores one selected ornament, not an entire batch.
 - One connected, closed mesh, flat on Z=0. Body diameter defaults to 100 mm; thickness defaults to 3 mm.
 - Fixed hanging ring: 8 mm outside diameter, 4 mm bore, independent of body size.
 - Binary STL and complete unsliced Bambu Studio project 3MF exports, one colour.
