@@ -1,0 +1,24 @@
+{
+  "name": "snowflake3d",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --config snowflake/vite.config.js --host 0.0.0.0",
+    "build": "vite build --config snowflake/vite.config.js",
+    "test": "node --test",
+    "check": "node scripts/check-snowflake.mjs",
+    "dev:snowflake": "npm run dev",
+    "build:snowflake": "npm run build",
+    "check:snowflake": "npm run check",
+    "pages:create": "npx --yes wrangler@4.151.1 pages project create snowflake3d --production-branch main",
+    "pages:deploy": "npm test && npm run build && npm run check && npx --yes wrangler@4.151.1 pages deploy dist-snowflake --project-name snowflake3d --branch main"
+  },
+  "devDependencies": {
+    "vite": "8.3.4"
+  },
+  "dependencies": {
+    "clipper-lib": "^6.4.2",
+    "earcut": "^3.2.4"
+  }
+}

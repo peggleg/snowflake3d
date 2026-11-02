@@ -1,0 +1,46 @@
+import './style.css';
+import {batchSettings} from './batch.js';
+import {design,defaults,decode,encode,printers} from './design.js';
+import {exportStl,export3mf} from './export.js';
+const $=id=>document.getElementById(id),form=$('settings');let current,history=[],index=-1,batch=[];
+function outline(m){return m.loops.map(loop=>'M'+loop.map(([x,y])=>`${x},${-y}`).join('L')+'Z').join('');}
+function gallery(){
+ const container=$('batch-gallery');const existing=Array.from(container.children);container.hidden=batch.length<2;while(container.children.length>batch.length)container.lastElementChild.remove();
+ batch.forEach((m,i)=>{const button=existing[i]||document.createElement('button');button.className='batch-item';button.setAttribute('aria-label',`Select snowflake ${i+1}`);button.setAttribute('aria-pressed',String(m.s.seed===current?.s.seed));const svg=button.querySelector('svg')||document.createElementNS('http://www.w3.org/2000/svg','svg'),path=svg.querySelector('path')||document.createElementNS(svg.namespaceURI,'path');svg.setAttribute('viewBox',`${m.bounds.minX-5} ${-m.bounds.maxY-5} ${m.width+10} ${m.height+10}`);svg.setAttribute('aria-hidden','true');path.setAttribute('d',outline(m));path.setAttribute('fill-rule','evenodd');if(!path.parentNode)svg.append(path);const label=button.querySelector('span')||document.createElement('span');label.textContent=`${i+1}${m.valid?'':' · Too large'}`;if(!svg.parentNode)button.append(svg,label);button.onclick=()=>{render(m.s);message(`Snowflake ${i+1} of ${batch.length} selected. Settings and downloads apply to this snowflake.`);};if(!button.parentNode)container.append(button);});
+}
+function message(t){$('status').textContent=t;}
+function url(s){return `${location.origin}/snowflake?${encode(s)}`;}
+function render(s,record=true){
+ const m=design(s);current=m;
+ if(record){history=history.slice(0,index+1);history.push({...m.s});index++;}
+ for(const [k,v] of Object.entries(m.s))form.elements[k].value=v;
+ const b=m.bounds,pad=10;$('preview').setAttribute('viewBox',`${b.minX-pad} ${-b.maxY-pad} ${m.width+pad*2} ${m.height+pad*2}`);
+ $('flake').setAttribute('d',outline(m));
+ const match=batch.findIndex(item=>item.s.seed===m.s.seed);if(match>=0)batch[match]=m;gallery();
+ $('dimensions').textContent=`${m.width.toFixed(1)} × ${m.height.toFixed(1)} mm`;
+ $('complexity-value').value=m.s.complexity;$('branch-value').value=`${m.s.branch} mm`;
+ $('design-number').textContent=`DESIGN ${index+1}`;
+ $('fit').textContent=m.valid?`Fits ${printers[m.s.printer].name} with a 2 mm edge margin.`:`Too large for ${printers[m.s.printer].name}. Reduce diameter or choose A1. Ring is included in this check.`;
+ $('stl').disabled=$('three-mf').disabled=!m.valid;$('previous').disabled=index<=0;$('next').disabled=index>=history.length-1;
+ window.history.replaceState(null,'',url(m.s));
+}
+form.addEventListener('input',()=>{if(!form.checkValidity())$('stl').disabled=$('three-mf').disabled=true;});
+form.addEventListener('change',()=>{try{if(!form.reportValidity()){$('stl').disabled=$('three-mf').disabled=true;return;}render(Object.fromEntries(new FormData(form)));message('');}catch(e){message(e.message);$('stl').disabled=$('three-mf').disabled=true;}});
+$('batch-count').addEventListener('input',()=>{const n=Number($('batch-count').value);$('generate').textContent=n>1?`Generate ${n} snowflakes ✦`:'Generate another ✦';});
+$('generate').onclick=async()=>{
+ if(!$('batch-count').reportValidity()||!form.reportValidity())return;
+ const a=crypto.getRandomValues(new Uint32Array(4)),seed=Array.from(a,x=>x.toString(16).padStart(8,'0')).join('');
+ const controls=[...document.querySelectorAll('button,input,select')];controls.forEach(el=>el.disabled=true);
+ try{
+  const inputs=batchSettings({...current.s,seed},Number($('batch-count').value)),result=[];
+  for(let i=0;i<inputs.length;i++){message(`Generating snowflake ${i+1} of ${inputs.length}…`);await new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));result.push(design(inputs[i]));}
+  batch=result;
+  const first=index+1;history=history.slice(0,first);history.push(...batch.map(m=>({...m.s})));index=first;
+  render(batch[0].s,false);message(batch.length===1?'A fresh snowflake, made just here.':`${batch.length} different snowflakes ready. Select one below to refine or download; each is a separate ornament.`);
+ }catch(e){message(e.message);}finally{controls.forEach(el=>el.disabled=false);$('previous').disabled=index<=0;$('next').disabled=index>=history.length-1;$('stl').disabled=$('three-mf').disabled=!current.valid;}
+};
+$('previous').onclick=()=>{if(index>0)render(history[--index],false);};$('next').onclick=()=>{if(index<history.length-1)render(history[++index],false);};
+$('copy').onclick=async()=>{try{await navigator.clipboard.writeText(url(current.s));message('Design link copied.');}catch{message('Clipboard unavailable. Copy the design link from your address bar.');}};
+for(const [id,format,fn] of [['stl','stl',exportStl],['three-mf','3mf',export3mf]])$(id).onclick=()=>{try{const bytes=fn(current),blob=new Blob([bytes],{type:format==='stl'?'model/stl':'model/3mf'}),href=URL.createObjectURL(blob),a=document.createElement('a');a.href=href;a.download=`snowflake-${current.s.seed.replace(/[^a-z0-9_-]/gi,'_')}.${format}`;a.click();setTimeout(()=>URL.revokeObjectURL(href),10000);message(`${format.toUpperCase()} ready. Inspect the slice before printing.`);}catch(e){message(e.message);}};
+try{render(decode(location.search));}catch(e){render(defaults);message(`Invalid design link: ${e.message} Loaded the default snowflake.`);}
+window.addEventListener('popstate',()=>{try{render(decode(location.search));}catch(e){message(e.message);}});

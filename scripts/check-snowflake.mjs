@@ -1,0 +1,14 @@
+import {readFile,readdir} from 'node:fs/promises';
+import assert from 'node:assert/strict';
+const root=new URL('../dist-snowflake/',import.meta.url),files=await readdir(root);
+assert.deepEqual(files.sort(),['THIRD_PARTY_NOTICES.txt','404.html','_headers','_redirects','assets','index.html','robots.txt'].sort());
+const html=await readFile(new URL('index.html',root),'utf8');
+assert.ok(html.includes('Snowflake workshop'));
+assert.ok(!/lithophane|makerworld|sitemap|<nav|rel="canonical"/i.test(html));
+const redirects=await readFile(new URL('_redirects',root),'utf8');
+assert.ok(redirects.includes('/ /snowflake 302'));
+assert.ok(redirects.includes('/snowflake /index.html 200'));
+const assets=await readdir(new URL('assets/',root));
+assert.ok(assets.some(f=>f.endsWith('.js'))&&assets.some(f=>f.endsWith('.css')));
+assert.ok(assets.every(f=>/\.(js|css)$/.test(f)),'No main-site image/worker assets');
+console.log('Standalone build verified: generator only, isolated routes, no main-site navigation/assets/sitemap.');

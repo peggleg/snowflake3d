@@ -1,0 +1,31 @@
+{
+  "upstream": "https://github.com/bambulab/BambuStudio/tree/master/resources/profiles/BBL",
+  "retrieved": "2026-11-01",
+  "profiles": [
+    "Bambu Lab A1 mini 0.4 nozzle",
+    "fdm_bbl_3dp_001_common",
+    "fdm_machine_common",
+    "Bambu Lab A1 mini 0.4 nozzle template machine_start_gcode",
+    "Bambu Lab A1 mini 0.4 nozzle template machine_end_gcode",
+    "Bambu Lab A1 mini 0.4 nozzle template layer_change_gcode",
+    "Bambu Lab A1 mini 0.4 nozzle template time_lapse_gcode",
+    "Bambu Lab A1 mini 0.4 nozzle template change_filament_gcode",
+    "0.20mm Standard @BBL A1M",
+    "fdm_process_single_0.20",
+    "fdm_process_single_common",
+    "fdm_process_common",
+    "Bambu PLA Basic @BBL A1M",
+    "Bambu PLA Basic @base",
+    "fdm_filament_pla",
+    "fdm_filament_common",
+    "Bambu Lab A1 0.4 nozzle",
+    "Bambu Lab A1 0.4 nozzle template machine_start_gcode",
+    "Bambu Lab A1 0.4 nozzle template machine_end_gcode",
+    "Bambu Lab A1 0.4 nozzle template time_lapse_gcode",
+    "Bambu Lab A1 0.4 nozzle template change_filament_gcode",
+    "Bambu Lab A1 0.4 nozzle template layer_change_gcode",
+    "0.20mm Standard @BBL A1",
+    "Bambu PLA Basic @BBL A1"
+  ],
+  "license": "AGPL-3.0; upstream profile data retained under its original license."
+}

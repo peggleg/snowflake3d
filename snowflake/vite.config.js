@@ -1,0 +1,2 @@
+import {defineConfig} from 'vite';
+export default defineConfig({root:'snowflake',publicDir:'public',build:{outDir:'../dist-snowflake',emptyOutDir:true},plugins:[{name:'isolated-routes',generateBundle(){this.emitFile({type:'asset',fileName:'_redirects',source:'/ /snowflake 302\n/snowflake /index.html 200\n/snowflake/ /index.html 200\n'});this.emitFile({type:'asset',fileName:'404.html',source:'<!doctype html><title>Not found</title><h1>Not found</h1>'});}}]});
