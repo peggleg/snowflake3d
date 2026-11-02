@@ -1,9 +1,11 @@
 import {readFile,readdir} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const root=new URL('../dist-snowflake/',import.meta.url),files=await readdir(root);
-assert.deepEqual(files.sort(),['THIRD_PARTY_NOTICES.txt','404.html','_headers','_redirects','assets','snowflake.html','robots.txt'].sort());
+assert.deepEqual(files.sort(),['THIRD_PARTY_NOTICES.txt','404.html','_headers','_redirects','assets','favicon.svg','snowflake.html','robots.txt'].sort());
 const html=await readFile(new URL('snowflake.html',root),'utf8');
 assert.ok(html.includes('Snowflake workshop'));
+assert.ok(html.includes('rel="icon"')&&html.includes('/favicon.svg?v=1'));
+assert.ok((await readFile(new URL('favicon.svg',root),'utf8')).includes('viewBox="0 0 32 32"'));
 assert.ok(!/lithophane|makerworld|sitemap|<nav|rel="canonical"/i.test(html));
 const redirects=await readFile(new URL('_redirects',root),'utf8');
 assert.ok(redirects.includes('/ /snowflake 302'));

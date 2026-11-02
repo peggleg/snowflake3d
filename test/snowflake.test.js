@@ -197,9 +197,24 @@ test('reference crystal families remain distinct, closed and connected across se
 });
 test('expanded random covers all nine families without changing old random recipes',async()=>{
  const {allSilhouettes,resolveSilhouette}=await import('../snowflake/src/airy-growth.js');
- assert.equal(defaults.silhouette,'random-all');
+ assert.equal(defaults.silhouette,'random');
  assert.deepEqual(allSilhouettes.map((_,i)=>resolveSilhouette('random-all',Array(100).fill((i+.5)/9))),allSilhouettes);
  const old=decode('?d=AwALd2ludGVyLTIwMjaEwBcFACQB8AEAyAEBAVpx');assert.equal(old.silhouette,'random');
  assert.deepEqual(decode(encode(old)),old);
  for(const choice of allSilhouettes)assert.equal(resolveSilhouette(choice,Array(100).fill(.5)),choice);
+});
+test('default Airy example retains the fuller approved geometry',async()=>{
+ const {createHash}=await import('node:crypto');
+ const m=design({...defaults,growth:'airy',seed:'winter-2026',complexity:18,branch:1.2,fullness:100,centre:'hex-frame',centreSize:18,pattern:'open'});
+ assert.equal(m.s.silhouette,'random');
+ assert.equal(createHash('sha256').update(new Uint8Array(m.vertices.buffer)).update(new Uint8Array(m.faces.buffer)).digest('hex'),'e7e1c9f741c338b5b993ac719905adb47c44929b6e6988fe9101b40c8e4c4762');
+});
+
+test('every crystal family gains printable detail at higher complexity',async()=>{
+ const {crystalFamilies}=await import('../snowflake/src/crystal-arms.js');
+ for(const silhouette of crystalFamilies){
+  const s={growth:'airy',silhouette,seed:'winter-2026',branch:1.2,fullness:100,centre:'hex-frame'};
+  const low=design({...s,complexity:3}),high=design({...s,complexity:18});
+  assert.ok(high.faces.length>low.faces.length,`${silhouette} must gain detail`);checkMesh(high);
+ }
 });

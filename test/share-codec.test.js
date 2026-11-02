@@ -5,10 +5,10 @@ import {settings,defaults,encode,decode,design} from '../snowflake/src/design.js
 test('compact links omit defaults, pack generated seeds and retain exact settings',()=>{
  const samples=[defaults,settings({seed:'0123456789abcdef0123456789abcdef'}),settings({seed:'❄️雪flake',mode:'prompt',text:'delicate winter 雪 ❄️',diameter:100.000001,thickness:Math.PI,branch:1.23456789,textWeight:.987654,centreSize:16.73,textPosition:-0}),settings({mode:'text',armLayout:'alternating',font:'courgette',text:'Text Test',textLayout:'flowing',centre:'web',complexity:18,branch:1.2})];
  for(const s of samples){const query=encode(s);assert.ok(query.startsWith('d='));assert.deepEqual(decode('?'+query),s);assert.ok(query.length<new URLSearchParams({v:'1',...s}).toString().length);}
- assert.ok(encode(samples[1]).length<=32);
+ assert.ok(encode(samples[1]).length<=36);
 });
 test('all options and numeric ranges survive compact round trips',()=>{
- const options={silhouette:['random-all','simple','plates','hex-tips','leaves','needles','random','legacy','star','fern','crystal','rounded'],mode:['random','text','prompt'],armLayout:['all','alternating'],centre:['random','original','solid-star','star-frame','hexagon','hex-frame','circle','ring','rosette','web'],font:['stroke','montecarlo','niconne','lato','breeserif','courgette','berkshireswash'],textLayout:['mirrored','single','flowing'],pattern:['mixed','open','lattice'],printer:['mini','a1']};
+ const options={crystalQuality:['original','refined'],silhouette:['random-all','simple','plates','hex-tips','leaves','needles','random','legacy','star','fern','crystal','rounded'],mode:['random','text','prompt'],armLayout:['all','alternating'],centre:['random','original','solid-star','star-frame','hexagon','hex-frame','circle','ring','rosette','web'],font:['stroke','montecarlo','niconne','lato','breeserif','courgette','berkshireswash'],textLayout:['mirrored','single','flowing'],pattern:['mixed','open','lattice'],printer:['mini','a1']};
  for(const [key,values]of Object.entries(options))for(const value of values){const s=settings({[key]:value});assert.deepEqual(decode(encode(s)),s);}
  for(const value of [-10,-2.15,-0,0,3.3333333333333335,10]){const s=settings({textPosition:value});assert.deepEqual(decode(encode(s)),s);}
  const s=settings({seed:'S'.repeat(128),mode:'prompt',text:'winter '.repeat(17).trim(),diameter:245,thickness:8,complexity:18,branch:4,centreSize:30,fullness:100,textSize:150,letterSpacing:40});assert.deepEqual(decode(encode(s)),s);
@@ -35,4 +35,10 @@ test('version 2 airy links retain their previous silhouette and centre joins',()
  assert.equal(old.silhouette,'legacy');assert.equal(old.growth,'airy');
  assert.deepEqual(decode(encode(old)),old);
  assert.equal(decode('?d=AQALd2ludGVyLTIwMjYAQzk').silhouette,'legacy');
+});
+test('version 4 crystal meshes remain reproducible and can be refined in version 5 links',async()=>{
+ const {createHash}=await import('node:crypto'),s=decode('?d=BAALd2ludGVyLTIwMjaEwDMFACQB8AEAyAEBCUfh');
+ assert.equal(s.crystalQuality,'original');const m=design(s);
+ assert.equal(createHash('sha256').update(new Uint8Array(m.vertices.buffer)).update(new Uint8Array(m.faces.buffer)).digest('hex'),'31cab6ec9d478f9ddb1b6622e5c6ac7468886d8ad84fa429d0c5efddb222db65');
+ const refined=settings({...s,crystalQuality:'refined'});assert.deepEqual(decode(encode(refined)),refined);assert.notDeepEqual(design(refined).vertices,m.vertices);
 });

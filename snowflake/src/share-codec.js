@@ -11,11 +11,12 @@ const FIELDS=[
 const V2_FIELDS=[...FIELDS,['growth',['original','airy']]];
 const V3_FIELDS=[...V2_FIELDS,['silhouette',['legacy','random','star','fern','crystal','rounded']]];
 const V4_FIELDS=[...V2_FIELDS,['silhouette',[...V3_FIELDS.at(-1)[1],'random-all','simple','plates','hex-tips','leaves','needles']]];
+const V5_FIELDS=[...V4_FIELDS,['crystalQuality',['original','refined']]];
 const utf8=new TextEncoder(),decoder=new TextDecoder('utf-8',{fatal:true});
 function checksum(bytes){let crc=0xffff;for(const b of bytes){crc^=b<<8;for(let i=0;i<8;i++)crc=((crc<<1)^((crc&0x8000)?0x1021:0))&0xffff;}return crc;}
 function base64(bytes){let binary='';for(const byte of bytes)binary+=String.fromCharCode(byte);return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
 export function encodeCompact(s){
- const bytes=[4],fields=V4_FIELDS,baseline={...BASE,growth:'original',silhouette:'random-all'};
+ const bytes=[5],fields=V5_FIELDS,baseline={...BASE,growth:'original',silhouette:'random',crystalQuality:'refined'};
  const unsigned=value=>{do{const b=value&127;value=Math.floor(value/128);bytes.push(b|(value?128:0));}while(value);};
  const signed=value=>unsigned(value<0?-value*2-1:value*2);
  const string=value=>{const b=utf8.encode(value);unsigned(b.length);bytes.push(...b);};
@@ -41,9 +42,9 @@ export function decodeCompact(token){
  const unsigned=()=>{let value=0,factor=1;for(let i=0;i<5;i++){const b=byte();value+=(b&127)*factor;if(!(b&128))return value;factor*=128;}throw Error('Invalid design number.');};
  const signed=()=>{const n=unsigned();return n%2?-(n+1)/2:n/2;};
  const string=()=>{const length=unsigned();if(length>1024||offset+length>end)throw Error('Invalid design text.');const b=bytes.subarray(offset,offset+length);offset+=length;return decoder.decode(b);};
- const version=byte();if(version!==1&&version!==2&&version!==3&&version!==4)throw Error('Unsupported compact design version.');
- const fields=version===1?FIELDS:version===2?V2_FIELDS:version===3?V3_FIELDS:V4_FIELDS;
- const s={...BASE,growth:'original',silhouette:version===4?'random-all':version===3?'random':'legacy'},seedKind=byte();if(seedKind===1){let seed='';for(let i=0;i<16;i++)seed+=byte().toString(16).padStart(2,'0');s.seed=seed;}
+ const version=byte();if(version!==1&&version!==2&&version!==3&&version!==4&&version!==5)throw Error('Unsupported compact design version.');
+ const fields=version===1?FIELDS:version===2?V2_FIELDS:version===3?V3_FIELDS:version===4?V4_FIELDS:V5_FIELDS;
+ const s={...BASE,growth:'original',silhouette:version===4?'random-all':version>=3?'random':'legacy',crystalQuality:version===5?'refined':'original'},seedKind=byte();if(seedKind===1){let seed='';for(let i=0;i<16;i++)seed+=byte().toString(16).padStart(2,'0');s.seed=seed;}
  else if(seedKind===0)s.seed=string();else throw Error('Invalid seed encoding.');
  const mask=unsigned();if(mask>=2**fields.length)throw Error('Unsupported design fields.');
  fields.forEach(([key,type],i)=>{
