@@ -7,7 +7,7 @@ import {centreChoices,centrePlan,replaceCentre} from './centre.js';
 import {balancedArm} from './airy-growth.js';
 import {branchDetail} from './branch-detail.js';
 import {conformTriangles} from './triangulate.js';
-export const defaults={seed:'winter-2026',mode:'random',armLayout:'all',growth:'original',centre:'random',centreSize:18,text:'text test',font:'stroke',textLayout:'mirrored',letterSpacing:0,textWeight:.65,textSize:100,textPosition:0,diameter:100,thickness:3,complexity:5,branch:2,fullness:0,pattern:'mixed',printer:'mini'};
+export const defaults={seed:'winter-2026',mode:'random',armLayout:'all',growth:'original',silhouette:'random',centre:'random',centreSize:18,text:'text test',font:'stroke',textLayout:'mirrored',letterSpacing:0,textWeight:.65,textSize:100,textPosition:0,diameter:100,thickness:3,complexity:5,branch:2,fullness:0,pattern:'mixed',printer:'mini'};
 export const printers={mini:{name:'Bambu Lab A1 mini',size:180},a1:{name:'Bambu Lab A1',size:256}};
 export function settings(input={}){
  const s={...defaults,...input};
@@ -16,6 +16,7 @@ export function settings(input={}){
  if(!['random','text','prompt'].includes(s.mode))throw Error('Invalid design mode.');
  if(!['stroke','montecarlo','niconne','lato','breeserif','courgette','berkshireswash'].includes(s.font))throw Error('Invalid text font.');
  if(!['random','original',...centreChoices].includes(s.centre))throw Error('Invalid centre shape.');
+ if(!['random','legacy','star','fern','crystal','rounded'].includes(s.silhouette))throw Error('Invalid outline shape.');
  if(!['original','airy'].includes(s.growth))throw Error('Invalid branch growth style.');
  if(!['all','alternating'].includes(s.armLayout))throw Error('Invalid arm arrangement.');
  if(!['mirrored','single','flowing'].includes(s.textLayout))throw Error('Invalid text layout.');
@@ -34,7 +35,7 @@ const path=p=>p.map(([x,y])=>({X:Math.round(x*scale),Y:Math.round(y*scale)}));
 function circle(x,y,r,n=96){return Array.from({length:n},(_,i)=>[x+r*Math.cos(i*2*Math.PI/n),y+r*Math.sin(i*2*Math.PI/n)]);}
 export function design(input){
  const s=settings(input),rng=random(s.mode==='prompt'?`text:${s.text}|${s.seed}`:s.seed),slots=Array.from({length:100},rng),R=s.diameter/2,w=s.branch,shapes=[];
- const centre=s.centre==='original'?null:centrePlan({choice:s.centre,radius:R*s.centreSize/100,branch:w,slots});
+ const centre=s.centre==='original'?null:centrePlan({choice:s.centre,radius:R*s.centreSize/100,branch:w,slots,matched:s.growth==='airy'&&s.silhouette!=='legacy'});
  const prompt=s.mode==='prompt',lush=prompt&&/FULL|DENSE|FERN|BROAD|LACE|LEAF/.test(s.text),fine=prompt&&/DELICATE|FINE|THIN|AIRY/.test(s.text);
  const script=s.mode==='text'&&s.font!=='stroke'?scriptLettering(s.text,R,w,s.font,s.textSize*(.96+slots[81]*.08),s.textPosition+(slots[82]-.5)*4,s.textLayout,s.letterSpacing,s.textWeight):null;
  const letters=s.mode==='text'&&!script?lettering(s.text,R,w):null;
@@ -60,7 +61,7 @@ export function design(input){
   for(const side of [-1,1])line(point(R*.93,0),point(R*.96,side*length),Math.max(.8,w*.55));
   continue;
  }
- if(airy){balancedArm({R,w,complexity:s.complexity,fullness:s.fullness,slots,point,line});continue;}
+ if(airy){balancedArm({R,w,complexity:s.complexity,fullness:s.fullness,slots,point,line,silhouette:s.silhouette});continue;}
  for(let j=0;j<Math.min(s.complexity,9);j++){
  const t=.16+j*.068+(slots[j]-.5)*.035,base=R*t,len=R*(.10+slots[10+j]*.14)*(1-t)*(lush?1.4:fine?.85:1),slope=.65+slots[20+j]*.6;
  for(const side of [-1,1]){
@@ -106,4 +107,4 @@ export function design(input){
 }
 export function encode(s){return 'd='+encodeCompact(settings(s));}
 export function decode(search){const q=new URLSearchParams(search);if(q.has('d')){if(q.getAll('d').length!==1)throw Error('Ambiguous design link.');return settings(decodeCompact(q.get('d')));}
- if(q.has('v')&&q.get('v')!=='1')throw Error('Unsupported design version.');return settings({...Object.fromEntries(Object.entries(defaults).filter(([k])=>q.has(k)).map(([k])=>[k,q.get(k)])),...(q.has('v')&&!q.has('centre')?{centre:'original'}:{})});}
+ if(q.has('v')&&q.get('v')!=='1')throw Error('Unsupported design version.');return settings({...((q.has('v')||q.has('seed'))&&!q.has('silhouette')?{silhouette:'legacy'}:{}),...Object.fromEntries(Object.entries(defaults).filter(([k])=>q.has(k)).map(([k])=>[k,q.get(k)])),...(q.has('v')&&!q.has('centre')?{centre:'original'}:{})});}

@@ -8,7 +8,7 @@ test('compact links omit defaults, pack generated seeds and retain exact setting
  assert.ok(encode(samples[1]).length<=32);
 });
 test('all options and numeric ranges survive compact round trips',()=>{
- const options={mode:['random','text','prompt'],armLayout:['all','alternating'],centre:['random','original','solid-star','star-frame','hexagon','hex-frame','circle','ring','rosette','web'],font:['stroke','montecarlo','niconne','lato','breeserif','courgette','berkshireswash'],textLayout:['mirrored','single','flowing'],pattern:['mixed','open','lattice'],printer:['mini','a1']};
+ const options={silhouette:['random','legacy','star','fern','crystal','rounded'],mode:['random','text','prompt'],armLayout:['all','alternating'],centre:['random','original','solid-star','star-frame','hexagon','hex-frame','circle','ring','rosette','web'],font:['stroke','montecarlo','niconne','lato','breeserif','courgette','berkshireswash'],textLayout:['mirrored','single','flowing'],pattern:['mixed','open','lattice'],printer:['mini','a1']};
  for(const [key,values]of Object.entries(options))for(const value of values){const s=settings({[key]:value});assert.deepEqual(decode(encode(s)),s);}
  for(const value of [-10,-2.15,-0,0,3.3333333333333335,10]){const s=settings({textPosition:value});assert.deepEqual(decode(encode(s)),s);}
  const s=settings({seed:'S'.repeat(128),mode:'prompt',text:'winter '.repeat(17).trim(),diameter:245,thickness:8,complexity:18,branch:4,centreSize:30,fullness:100,textSize:150,letterSpacing:40});assert.deepEqual(decode(encode(s)),s);
@@ -28,4 +28,11 @@ test('legacy design links and compact replacements reproduce identical geometry'
 test('version 1 compact links retain original growth while version 2 preserves airy recipes',()=>{
  const original=decode('?d=AQALd2ludGVyLTIwMjYAQzk');assert.equal(original.growth,'original');assert.equal(original.seed,'winter-2026');
  const airy=settings({growth:'airy',fullness:100,complexity:18,branch:1.2});assert.deepEqual(decode(encode(airy)),airy);
+});
+
+test('version 2 airy links retain their previous silhouette and centre joins',()=>{
+ const old=decode('?d=AgALd2ludGVyLTIwMjaEwBcFACQB8AEAyAEBAX7l');
+ assert.equal(old.silhouette,'legacy');assert.equal(old.growth,'airy');
+ assert.deepEqual(decode(encode(old)),old);
+ assert.equal(decode('?d=AQALd2ludGVyLTIwMjYAQzk').silhouette,'legacy');
 });

@@ -58,3 +58,8 @@ Migrated from the standalone snowflake work in `peggleg/lithophane-site`. The re
 Tests check seeds, ring dimensions, closed edges, connectedness, normals, volume, printer fit, batch counts, exports and project settings. The isolated build check excludes main-site navigation/assets/sitemap. Browser checks were also performed for desktop/mobile interactions and downloads. Native Bambu Studio slicing and physical printing remain manual acceptance checks.
 
 Resolved Bambu machine, process and filament profiles, their upstream provenance and license are in `snowflake/src/profiles/`. Third-party notices are included in the production output. Keep generator version 1 geometry unchanged to preserve existing design links; use a new version and retain old-version dispatch for future geometry changes.
+
+
+Airy growth includes an **Outline shape** selector: Random (default), Pointed star, Feathery star, Broad crystal and Rounded snowflake. Random chooses a family from the seed; each family changes the main bough envelope before applying spacing checks. Complexity adds detail inside that envelope. New Airy centre connectors and fragment bridges use the selected main branch thickness. Frame walls retain their separate finer detail.
+
+Compact recipe version 3 stores the outline choice. Versions 1 and 2 retain the previous outline and centre joins; the Original airy outline option preserves that geometry. Loading an old design preserves it, while generating a fresh design upgrades to random outlines unless the outline selector was explicitly set.

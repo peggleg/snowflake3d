@@ -159,3 +159,25 @@ test('airy fullness spreads material over a wider footprint instead of filling t
  const material=m=>area(m.loops[0])-m.loops.slice(1).reduce((s,p)=>s+area(p),0),s={seed:'winter-2026',complexity:18,branch:1.2,fullness:100,centre:'hex-frame',pattern:'open'},old=design({...s,growth:'original'}),airy=design({...s,growth:'airy'});
  assert.ok(footprint(airy)>footprint(old)*1.1);assert.ok(material(airy)/footprint(airy)<material(old)/footprint(old)*.9);
 });
+
+ test('airy outline families are distinct, reproducible and watertight',async()=>{
+ const {resolveSilhouette}=await import('../snowflake/src/airy-growth.js');
+ const choices=['star','fern','crystal','rounded'],outlines=[];
+ for(const silhouette of choices){
+  for(const [diameter,branch] of [[40,4],[100,1.2],[245,1.2]]){
+   const s=settings({growth:'airy',silhouette,seed:'outline-check',complexity:18,fullness:100,diameter,branch,printer:'a1'}),m=design(s);
+   checkMesh(m);assert.deepEqual(design(decode(encode(s))).vertices,m.vertices);
+   if(diameter===100)outlines.push(JSON.stringify(m.loops));
+  }
+ }
+ assert.equal(new Set(outlines).size,4);
+ assert.deepEqual([.01,.3,.6,.99].map(n=>resolveSilhouette('random',Array(100).fill(n))),choices);
+ });
+ test('new airy centre connectors match selected branch width',async()=>{
+ const {centrePlan}=await import('../snowflake/src/centre.js');
+ for(const branch of [1.2,2,4])for(const choice of ['star-frame','hex-frame','rosette','web']){
+  const plan=centrePlan({choice,radius:9,branch,slots:Array(100).fill(.5),matched:true});
+  assert.equal(plan.joinWidth,branch);
+  checkMesh(design({growth:'airy',silhouette:'star',centre:choice,branch,complexity:18,fullness:100}));
+ }
+ });

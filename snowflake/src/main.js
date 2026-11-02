@@ -6,6 +6,7 @@ import {design,defaults,decode,encode,printers} from './design.js';
 import {exportStl,export3mf} from './export.js';
 const $=id=>document.getElementById(id),form=$('settings');let current,history=[],index=-1,batch=[];
 let legacyCentre=new URLSearchParams(location.search).has('v')&&!new URLSearchParams(location.search).has('centre');
+let legacySilhouette=/^A[Qg]/.test(new URLSearchParams(location.search).get('d')||'')||new URLSearchParams(location.search).has('v');
 const rotation=previewRotation($('preview'),$('flake'),$('view-rotation'),$('rotation-value'),$('reset-view'),$('rotate-left'),$('rotate-right'));
 function outline(m){return m.loops.map(loop=>'M'+loop.map(([x,y])=>`${x},${-y}`).join('L')+'Z').join('');}
 function gallery(){
@@ -29,6 +30,7 @@ function render(s,record=true){
  form.elements.text.maxLength=textMode?12:120;form.elements.text.placeholder=textMode?'text test':'e.g. full fern or delicate crystal';
  $('text-hint').textContent=textMode?(scriptMode?(flowing?'Flowing mirrored script, using name case for readability. Reduce letter weight for a more open pattern.':m.s.textLayout==='single'?'One readable word on each arm. Lato and Bree Serif work well with capitals.':'Mirrored copies create a decorative pattern. Use mixed case for script fonts; increase letter spacing if letters merge.'):'Original block lettering repeats in six arms. Longer text needs a larger diameter.'):'Create a repeatable abstract design from up to 120 characters. Try “full fern” or “delicate crystal”. Runs locally; letters are not printed.';
  $('fullness-hint').hidden=$('complexity-hint').hidden=$('growth-control').hidden=$('airy-example').hidden=textMode&&!mixed;
+ $('silhouette-control').hidden=m.s.growth!=='airy'||(textMode&&!mixed);
  $('complexity-hint').textContent=m.s.growth==='airy'?'Detail is added only where a clear gap remains. Increase diameter or reduce branch thickness to fit finer offshoots.':'10–18 add nested offshoots and tip branches. For finer detail, use a larger diameter or thinner branches.';
  $('fullness-hint').textContent=m.s.growth==='airy'?'Fullness spreads the main boughs into the spaces between arms.':'Turn up for broader outer branches and shorter bare tips.';
  for(const name of ['complexity','fullness','pattern'])form.elements[name].closest('label').hidden=textMode&&!mixed;
@@ -49,21 +51,21 @@ function render(s,record=true){
  window.history.replaceState(null,'',url(m.s));
 }
 form.addEventListener('input',()=>{if(!form.checkValidity())$('stl').disabled=$('three-mf').disabled=true;});
-form.addEventListener('change',event=>{try{if(event.target.name==='centre')legacyCentre=false;if(event.target.name==='mode'){const mode=form.elements.mode.value,hasText=mode!=='random';$('text-control').hidden=$('text-hint').hidden=!hasText;form.elements.text.required=hasText;form.elements.text.maxLength=mode==='text'?12:120;if(mode==='text'&&current.s.mode!=='text'){form.elements.font.value='courgette';form.elements.textLayout.value='flowing';form.elements.letterSpacing.value='0';form.elements.textSize.value='110';}if(hasText&&!form.elements.text.value)form.elements.text.value=mode==='text'?'text test':'FULL FERN';if(mode==='text')form.elements.text.value=form.elements.text.value.slice(0,12);}
+form.addEventListener('change',event=>{try{if(event.target.name==='centre')legacyCentre=false;if(event.target.name==='silhouette')legacySilhouette=false;if(event.target.name==='growth'&&form.elements.growth.value==='airy'&&legacySilhouette){form.elements.silhouette.value='random';legacySilhouette=false;}if(event.target.name==='mode'){const mode=form.elements.mode.value,hasText=mode!=='random';$('text-control').hidden=$('text-hint').hidden=!hasText;form.elements.text.required=hasText;form.elements.text.maxLength=mode==='text'?12:120;if(mode==='text'&&current.s.mode!=='text'){form.elements.font.value='courgette';form.elements.textLayout.value='flowing';form.elements.letterSpacing.value='0';form.elements.textSize.value='110';}if(hasText&&!form.elements.text.value)form.elements.text.value=mode==='text'?'text test':'FULL FERN';if(mode==='text')form.elements.text.value=form.elements.text.value.slice(0,12);}
 if(event.target.name==='font'&&['lato','breeserif'].includes(form.elements.font.value)&&!['lato','breeserif'].includes(current.s.font)){form.elements.textLayout.value='single';form.elements.letterSpacing.value='10';}
 if(event.target.name==='font'&&['montecarlo','niconne','courgette','berkshireswash'].includes(form.elements.font.value)&&(['lato','breeserif'].includes(current.s.font)||['courgette','berkshireswash'].includes(form.elements.font.value)&&!['courgette','berkshireswash'].includes(current.s.font))){form.elements.textLayout.value='flowing';form.elements.letterSpacing.value='0';form.elements.textSize.value='110';}
 if(event.target.name==='armLayout'&&form.elements.armLayout.value==='alternating'){form.elements.complexity.value='6';form.elements.fullness.value='80';form.elements.branch.value='1.2';form.elements.pattern.value='open';}
 if(!form.reportValidity()){$('stl').disabled=$('three-mf').disabled=true;return;}render(Object.fromEntries(new FormData(form)));message('');}catch(e){message(e.message);$('stl').disabled=$('three-mf').disabled=true;}});
-$('airy-example').onclick=()=>{legacyCentre=false;render({...defaults,printer:current.s.printer,growth:'airy',seed:'winter-2026',complexity:18,branch:1.2,fullness:100,centre:'hex-frame',centreSize:18,pattern:'open'});$('reset-view').click();message('Rendered example loaded: broad boughs with protected gaps.');};
+$('airy-example').onclick=()=>{legacyCentre=false;legacySilhouette=false;render({...defaults,printer:current.s.printer,growth:'airy',seed:'winter-2026',complexity:18,branch:1.2,fullness:100,centre:'hex-frame',centreSize:18,pattern:'open'});$('reset-view').click();message('Rendered example loaded: broad boughs with protected gaps.');};
 $('batch-count').addEventListener('input',()=>{const n=Number($('batch-count').value);$('generate').textContent=n>1?`Generate ${n} snowflakes ✦`:'Generate another ✦';});
 $('generate').onclick=async()=>{
  if(!$('batch-count').reportValidity()||!form.reportValidity())return;
  const a=crypto.getRandomValues(new Uint32Array(4)),seed=Array.from(a,x=>x.toString(16).padStart(8,'0')).join('');
  const controls=[...document.querySelectorAll('button,input,select')];controls.forEach(el=>el.disabled=true);
  try{
-  const inputs=batchSettings({...current.s,seed,centre:legacyCentre?'random':current.s.centre},Number($('batch-count').value)),result=[];
+  const inputs=batchSettings({...current.s,seed,silhouette:legacySilhouette?'random':current.s.silhouette,centre:legacyCentre?'random':current.s.centre},Number($('batch-count').value)),result=[];
   for(let i=0;i<inputs.length;i++){message(`Generating snowflake ${i+1} of ${inputs.length}…`);await new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));result.push(design(inputs[i]));}
-  batch=result;legacyCentre=false;
+  batch=result;legacyCentre=false;legacySilhouette=false;
   const first=index+1;history=history.slice(0,first);history.push(...batch.map(m=>({...m.s})));index=first;
   render(batch[0].s,false);message(batch.length===1?'A fresh snowflake, made just here.':`${batch.length} different snowflakes ready. Select one below to refine or download; each is a separate ornament.`);
  }catch(e){message(e.message);}finally{controls.forEach(el=>el.disabled=false);$('previous').disabled=index<=0;$('next').disabled=index>=history.length-1;$('stl').disabled=$('three-mf').disabled=!current.valid;}

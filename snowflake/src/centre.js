@@ -4,8 +4,9 @@ export const centreChoices=['solid-star','star-frame','hexagon','hex-frame','cir
 export const centreLabels={'solid-star':'Solid star','star-frame':'Open star',hexagon:'Solid hexagon','hex-frame':'Hexagon frame',circle:'Solid circle',ring:'Circular ring',rosette:'Petal rosette',web:'Hexagonal web',original:'Original centre'};
 const polygon=(r,n=6,rotation=Math.PI/2)=>Array.from({length:n},(_,i)=>[Math.cos(rotation+i*Math.PI*2/n)*r,Math.sin(rotation+i*Math.PI*2/n)*r]);
 const integer=p=>p.map(([x,y])=>({X:Math.round(x*SCALE),Y:Math.round(y*SCALE)}));
-export function centrePlan({choice,radius,branch,slots}){
+export function centrePlan({choice,radius,branch,slots,matched=false}){
  const kind=choice==='random'?centreChoices[Math.min(centreChoices.length-1,Math.floor(slots[90]*centreChoices.length))]:choice;
+ const joinWidth=matched?branch:null;
  const rim=Math.max(.8,Math.min(branch*.65,radius*.24)),paths=[];
  const add=p=>{const c=integer(p);if(!ClipperLib.Clipper.Orientation(c))c.reverse();paths.push(c);return c;};
  const frame=p=>{const outer=add(p),offset=new ClipperLib.ClipperOffset();offset.AddPath(outer,ClipperLib.JoinType.jtMiter,ClipperLib.EndType.etClosedPolygon);const inside=[];offset.Execute(inside,-rim*SCALE);for(const c of inside){if(ClipperLib.Clipper.Orientation(c))c.reverse();paths.push(c);}};
@@ -26,8 +27,8 @@ export function centrePlan({choice,radius,branch,slots}){
   for(let i=0;i<6;i++){const a=Math.PI/2+i*Math.PI/3;bar([Math.cos(a)*radius*.4,Math.sin(a)*radius*.4],[Math.cos(a)*radius,Math.sin(a)*radius]);}
  }
  // Join the six arm axes without running spokes across the open centre.
- for(let i=0;i<6;i++){const a=Math.PI/2+i*Math.PI/3,unit=[Math.cos(a),Math.sin(a)],start=radius-rim*.3;bar(unit.map(x=>x*start),unit.map(x=>x*(radius+rim)));add(polygon(rim/2,16).map(([x,y])=>[x+unit[0]*start,y+unit[1]*start]));}
- return {kind,radius,rim,paths};
+ for(let i=0;i<6;i++){const a=Math.PI/2+i*Math.PI/3,unit=[Math.cos(a),Math.sin(a)],start=radius-rim*.3,width=joinWidth??rim;bar(unit.map(x=>x*start),unit.map(x=>x*(radius+Math.max(rim,width))),width);add(polygon(width/2,16).map(([x,y])=>[x+unit[0]*start,y+unit[1]*start]));}
+ return {kind,radius,rim,joinWidth:joinWidth??rim,paths};
 }
 function execute(subject,clips,type){const c=new ClipperLib.Clipper();c.AddPaths(subject,ClipperLib.PolyType.ptSubject,true);if(clips.length)c.AddPaths(clips,ClipperLib.PolyType.ptClip,true);const tree=new ClipperLib.PolyTree();c.Execute(type,tree,ClipperLib.PolyFillType.pftNonZero,ClipperLib.PolyFillType.pftNonZero);return tree;}
 const flatten=tree=>ClipperLib.Clipper.PolyTreeToPaths(tree);
@@ -42,8 +43,8 @@ export function replaceCentre(subject,plan){
   for(const node of roots.slice(1)){
    let best=Infinity,pair;
    for(const p of node.Contour())for(const q of candidates){const d=(p.X-q.X)**2+(p.Y-q.Y)**2;if(d<best){best=d;pair=[p,q];}}
-   if(!pair)continue;const [a,b]=pair,dx=b.X-a.X,dy=b.Y-a.Y,length=Math.hypot(dx,dy),half=plan.rim*SCALE/2;
-   if(length<1){joins.push(integer(polygon(plan.rim/2,24).map(([x,y])=>[x+a.X/SCALE,y+a.Y/SCALE])));continue;}const nx=-dy/length*half,ny=dx/length*half,ux=dx/length*half,uy=dy/length*half;
+   if(!pair)continue;const [a,b]=pair,dx=b.X-a.X,dy=b.Y-a.Y,length=Math.hypot(dx,dy),half=plan.joinWidth*SCALE/2;
+   if(length<1){joins.push(integer(polygon(plan.joinWidth/2,24).map(([x,y])=>[x+a.X/SCALE,y+a.Y/SCALE])));continue;}const nx=-dy/length*half,ny=dx/length*half,ux=dx/length*half,uy=dy/length*half;
    let c=[{X:a.X+nx-ux,Y:a.Y+ny-uy},{X:a.X-nx-ux,Y:a.Y-ny-uy},{X:b.X-nx+ux,Y:b.Y-ny+uy},{X:b.X+nx+ux,Y:b.Y+ny+uy}].map(p=>({X:Math.round(p.X),Y:Math.round(p.Y)}));if(!ClipperLib.Clipper.Orientation(c))c.reverse();joins.push(c);
   }
   tree=execute([...flatten(tree),...joins],[],ClipperLib.ClipType.ctUnion);
