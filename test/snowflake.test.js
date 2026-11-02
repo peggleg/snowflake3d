@@ -108,3 +108,17 @@ test('recommended ornamental fonts keep text-test words connected and printable'
  }
  for(const font of ['courgette','berkshireswash'])for(const diameter of [40,245])for(const textWeight of [.5,1.2])checkMesh(design({mode:'text',font,text:'text test',textLayout:'flowing',diameter,textWeight,printer:'a1'}));
 });
+
+test('alternating text and branch layouts preserve connectedness, fixed bore and links',async()=>{
+ const {batchSettings}=await import('../snowflake/src/batch.js');
+ const base={mode:'text',armLayout:'alternating',text:'text test',textLayout:'flowing',textSize:110,textWeight:.65,branch:1.2,complexity:6,fullness:80,pattern:'open'};
+ for(const font of ['courgette','berkshireswash','stroke'])for(const diameter of [40,100,245]){
+  const s=settings({...base,font,diameter,printer:'a1'}),m=design(s);checkMesh(m);assert.equal(m.bounds.maxY,diameter/2+7);
+  const cy=diameter/2+3,bore=m.loops.find(l=>l.every(([x,y])=>Math.abs(x)<=2.001&&Math.abs(y-cy)<=2.001));assert.ok(bore);
+  assert.deepEqual(decode('?'+encode(s)),s);assert.deepEqual(design(decode('?'+encode(s))).vertices,m.vertices);
+  if(m.valid){assert.ok(exportStl(m).length);assert.equal(JSON.parse(projectFiles(m)['Metadata/snowflake.json']).settings.armLayout,'alternating');}
+ }
+ const a=design({...base,font:'courgette'}),b=design({...base,font:'courgette',armLayout:'all'});assert.notDeepEqual(a.vertices,b.vertices);
+ const variants=batchSettings({...base,font:'courgette'},24);assert.ok(variants.every(s=>s.armLayout==='alternating'));
+ assert.throws(()=>settings({armLayout:'bad'}));assert.equal(decode('?v=1&seed=winter-2026').armLayout,'all');
+});

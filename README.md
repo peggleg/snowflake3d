@@ -23,6 +23,8 @@ Deploy only `dist-snowflake/`. See [Cloudflare deployment](CLOUDFLARE.md).
 
 ## Features
 
+- In Text mode, choose **Arm arrangement → 3 text + 3 snowflake branches** for alternating text/branch arms. Its initial branch settings match the concept render: complexity 6, fullness 80%, 1.2 mm branches and open openings. These controls remain adjustable. The six arms alternate at 60° intervals, giving the mixed pattern 120° rotational repetition. Both fonts, saved links, history, batches and exports retain the selected arrangement. Existing designs default to all six text arms.
+
 - Three design modes: Random, readable text repeated in six arms, and a text-inspired abstract pattern.
 - New text designs use the literal sample “text test” and default to the Flowing snowflake layout with Courgette. Courgette and Berkshire Swash are the recommended font choices. This layout uses mirrored script, name case for all-capital input, lighter configurable letter weight, a smaller centre connection and separated baselines. Existing saved layouts are preserved. Lato with a single readable word per arm remains optional. Lato and Bree Serif support clear capitals; single or mirrored layouts and letter spacing are adjustable. Existing links retain their saved font and mirrored layout.
 - Readable text also offers MonteCarlo and Niconne mirrored script fonts with mixed case, letter-height and radial-position controls. The original block-letter font remains available and old links retain it. Up to 12 letters, digits, spaces, hyphens and apostrophes are accepted; common accented letters are normalized. Longer words need a larger body. Exports are blocked when the letter openings would be too small.
