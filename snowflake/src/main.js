@@ -1,8 +1,10 @@
 import './style.css';
+import {previewRotation} from './preview-rotation.js';
 import {batchSettings} from './batch.js';
 import {design,defaults,decode,encode,printers} from './design.js';
 import {exportStl,export3mf} from './export.js';
 const $=id=>document.getElementById(id),form=$('settings');let current,history=[],index=-1,batch=[];
+const rotation=previewRotation($('preview'),$('flake'),$('view-rotation'),$('rotation-value'),$('reset-view'),$('rotate-left'),$('rotate-right'));
 function outline(m){return m.loops.map(loop=>'M'+loop.map(([x,y])=>`${x},${-y}`).join('L')+'Z').join('');}
 function gallery(){
  const container=$('batch-gallery');const existing=Array.from(container.children);container.hidden=batch.length<2;while(container.children.length>batch.length)container.lastElementChild.remove();
@@ -25,8 +27,9 @@ function render(s,record=true){
  $('fullness-hint').hidden=textMode&&!mixed;
  for(const name of ['complexity','fullness','pattern'])form.elements[name].closest('label').hidden=textMode&&!mixed;
  if(mixed)$('text-hint').textContent='Three text arms alternate with three snowflake branches. Complexity, fullness and branch thickness adjust the snowflake branches.';
- const b=m.bounds,pad=10;$('preview').setAttribute('viewBox',`${b.minX-pad} ${-b.maxY-pad} ${m.width+pad*2} ${m.height+pad*2}`);
- $('flake').setAttribute('d',outline(m));
+ const extent=m.loops.reduce((r,loop)=>loop.reduce((r,[x,y])=>Math.max(r,Math.hypot(x,y)),r),0)+8;
+ $('preview').setAttribute('viewBox',`${-extent} ${-extent} ${extent*2} ${extent*2}`);
+ $('flake').setAttribute('d',outline(m));rotation.refresh();
  const match=batch.findIndex(item=>item.s.seed===m.s.seed);if(match>=0)batch[match]=m;gallery();
  $('dimensions').textContent=`${m.width.toFixed(1)} × ${m.height.toFixed(1)} mm`;
  $('text-weight-value').value=`${m.s.textWeight.toFixed(2)} mm`;

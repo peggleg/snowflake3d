@@ -23,6 +23,8 @@ Deploy only `dist-snowflake/`. See [Cloudflare deployment](CLOUDFLARE.md).
 
 ## Features
 
+- Rotate the on-screen preview by dragging, using the angle slider or 30° buttons. Keyboard left/right rotate 15°; Home or Reset view returns the hanging loop to the top. The preview fits every orientation and retains its angle while adjusting the design. Rotation is a view setting only: design links and STL/3MF geometry are unchanged.
+
 - In Text mode, choose **Arm arrangement → 3 text + 3 snowflake branches** for alternating text/branch arms. Its initial branch settings match the concept render: complexity 6, fullness 80%, 1.2 mm branches and open openings. These controls remain adjustable. The six arms alternate at 60° intervals, giving the mixed pattern 120° rotational repetition. Both fonts, saved links, history, batches and exports retain the selected arrangement. Existing designs default to all six text arms.
 
 - Three design modes: Random, readable text repeated in six arms, and a text-inspired abstract pattern.

@@ -5,3 +5,5 @@
 .mode-control{grid-column:span 2}#text-control[hidden],#text-hint[hidden],label[hidden]{display:none}
 
 form>label.dimensions-control{grid-column:span 1}
+
+#preview{cursor:grab;touch-action:none;user-select:none}#preview.rotating{cursor:grabbing}#preview:focus-visible{outline:2px solid #83a78d;outline-offset:3px;border-radius:6px}.rotation-controls{width:100%;max-width:340px;margin:0 auto 22px}.rotation-controls label{display:block;font-size:11px;color:#557364}.rotation-controls input{margin:10px 0 12px;accent-color:#436b58}.rotation-buttons{display:flex;gap:8px;justify-content:center}.rotation-buttons button{padding:7px 12px}.rotation-controls p{font-size:10px;color:#6b8175;text-align:center;margin:10px 0 0}
