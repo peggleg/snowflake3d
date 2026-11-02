@@ -29,6 +29,12 @@ function render(s,record=true){
  const m=design(s);current=m;
  if(record){history=history.slice(0,index+1);history.push({...m.s});index++;}
  for(const [k,v] of Object.entries(m.s))form.elements[k].value=v;
+ $('centre-ams-control').hidden=m.s.centre!=='text';
+ const ams=m.s.centre==='text'&&m.s.centreAms==='on';$('main-colour-control').hidden=$('centre-colour-control').hidden=$('centre-ams-hint').hidden=!ams;
+ $('model-caption').textContent=ams?'ONE PIECE · TWO FILAMENTS · PRINTS FLAT':'ONE PIECE · ONE COLOUR · PRINTS FLAT';
+ $('material-swatches').parentElement.hidden=ams;
+ $('flake').style.fill=ams?m.s.mainColour:'';
+ $('centre-colour').setAttribute('d',m.parts?outline(m.parts[1]):'');$('centre-colour').style.fill=m.s.centreColour;
  $('centre-text-control').hidden=$('centre-font-control').hidden=m.s.centre!=='text';form.elements.centreText.required=m.s.centre==='text';
  $('centre-size-control').hidden=m.s.centre==='original';$('centre-size-value').value=`${m.s.centreSize}%`;
  $('centre-hint').textContent=m.s.centre==='random'?`Seeded choice: ${centreLabels[m.centreKind]}. Generate another to vary it.`:m.s.centre==='original'?'Original centre preserved. Choose Random for a seeded centre variation.':'Centre size scales with the flake. Larger centres can overlap lettering.';

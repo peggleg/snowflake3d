@@ -19,6 +19,7 @@ export function textCentrePlan({text,font,radius,branch}){
  const bar=(a,b,w)=>{const dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy);if(len<1e-7)return;const x=-dy/len*w/2,y=dx/len*w/2;positive([[a[0]+x,a[1]+y],[a[0]-x,a[1]-y],[b[0]-x,b[1]-y],[b[0]+x,b[1]+y]]);};
  const disk=(p,r)=>positive(Array.from({length:24},(_,i)=>[p[0]+Math.cos(i*Math.PI/12)*r,p[1]+Math.sin(i*Math.PI/12)*r]));
  const offset=new ClipperLib.ClipperOffset(2,.01*SCALE);offset.AddPaths(transformed.flat().map(path),ClipperLib.JoinType.jtRound,ClipperLib.EndType.etClosedPolygon);offset.Execute(paths,padding*SCALE);
+ const letterPaths=paths.map(c=>c.map(p=>({...p})));
  for(const [a,b]of glyphLinks)bar([(a[0]-midX)*factor,(a[1]-midY)*factor+width*.25],[(b[0]-midX)*factor,(b[1]-midY)*factor+width*.25],width);
  const all=transformed.flat(2),bottom=Math.min(...all.map(p=>p[1]))-width/2+padding*.5,left=Math.min(...all.map(p=>p[0])),right=Math.max(...all.map(p=>p[0]));
  bar([left,bottom],[right,bottom],width);disk([left,bottom],width/2);disk([right,bottom],width/2);
@@ -27,5 +28,5 @@ export function textCentrePlan({text,font,radius,branch}){
  const boundaries=tree.Childs().flatMap(node=>{const c=node.Contour();return c.map((p,i)=>[[p.X/SCALE,p.Y/SCALE],[c[(i+1)%c.length].X/SCALE,c[(i+1)%c.length].Y/SCALE]]);});
  const closest=p=>{let best=Infinity,result;for(const [a,b]of boundaries){const dx=b[0]-a[0],dy=b[1]-a[1],length=dx*dx+dy*dy,t=length?Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dy)/length)):0,q=[a[0]+t*dx,a[1]+t*dy],d=(p[0]-q[0])**2+(p[1]-q[1])**2;if(d<best){best=d;result=q;}}return result;};
  for(let i=0;i<6;i++){const a=Math.PI/2+i*Math.PI/3,p=[Math.cos(a)*(radius+branch),Math.sin(a)*(radius+branch)],q=closest(p);if(q){bar(p,q,branch);disk(q,branch/2);}}
- return {kind:'text',radius,rim:width,joinWidth:branch,paths,printable:(maxY-minY)*factor>=4,letterHeight:(maxY-minY)*factor};
+ return {kind:'text',radius,rim:width,joinWidth:branch,paths,letterPaths,printable:(maxY-minY)*factor>=4,letterHeight:(maxY-minY)*factor};
 }

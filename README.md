@@ -27,7 +27,7 @@ Deploy only `dist-snowflake/`. See [Cloudflare deployment](CLOUDFLARE.md).
 
 - **Natural crystal growth** is an optional engine. It adapts the supplied workshop HTML’s branch proportions and varied angles, with Random, Stellar dendrite, Fern and Plate families. The dark stage adds warm/cool material lighting and six initial designs; colour and rotation are preview-only. The prototype’s placeholder downloads are replaced by real watertight STL and Bambu Studio 3MF exports.
 
-- **Branch growth → Airy growth** uses longer, wider-spreading boughs with spacing checks. Offshoots shrink or are omitted if they cannot fit without closing the reserved gaps. Fullness controls spread, and complexity adds detail within the available space. **Load airy rendered example** restores the exact 100 mm, complexity-18, 1.2 mm branch example. This also works on snowflake arms in alternating layouts. Older links retain their saved growth engine. New compact links use recipe version 8; versions 1–7 remain readable.
+- **Branch growth → Airy growth** uses longer, wider-spreading boughs with spacing checks. Offshoots shrink or are omitted if they cannot fit without closing the reserved gaps. Fullness controls spread, and complexity adds detail within the available space. **Load airy rendered example** restores the exact 100 mm, complexity-18, 1.2 mm branch example. This also works on snowflake arms in alternating layouts. Older links retain their saved growth engine. New compact links use recipe version 9; versions 1–8 remain readable.
 
 - Copy design link uses a compact, versioned `?d=…` recipe with a checksum. Generated seeds are packed as bytes and default settings are omitted. Exact non-default numeric settings and text are retained; no database or third-party shortener is used. Previous long `?v=1&seed=…` links still load and are rewritten to the compact form. The immutable recipe baseline and enum ordering in `share-codec.js` must remain compatible for old codes.
 
@@ -49,7 +49,7 @@ Deploy only `dist-snowflake/`. See [Cloudflare deployment](CLOUDFLARE.md).
 - Seeded, reproducible geometry with complexity, branch width, opening and fullness controls. Fullness adds broader boughs toward the tips; zero preserves the original design. Previous/Next history and Copy design link. The link restores one selected ornament, not an entire batch.
 - One connected, closed mesh, flat on Z=0. Body diameter defaults to 100 mm; thickness defaults to 3 mm.
 - Fixed hanging ring: 8 mm outside diameter, 4 mm bore, independent of body size.
-- Binary STL and complete unsliced Bambu Studio project 3MF exports, one colour.
+- Binary STL and complete unsliced Bambu Studio project 3MF exports. Single filament by default; optional AMS colour for centre letters only.
 - A1 mini (180 mm) default and A1 (256 mm) option. Actual bounds including the ring must fit with 2 mm edge margins. Exports are blocked when the selected plate is too small.
 - PLA, 0.20 mm layers, 8% gyroid, 2 walls, 3 top and 3 bottom layers. Shell thickness overrides are zero so inherited minimums cannot force extra layers.
 
@@ -88,3 +88,12 @@ Choose **Centre shape → Text** to make a readable word part of the central str
 Centre-font choices are grouped into clear lettering and script/ornamental styles. Recipe version 8 adds the four script/ornamental centre fonts while retaining the version-7 font ordering for saved designs.
 
 Only Airy is offered in the Growth style menu. Natural and Original generators and their recipe fields remain implemented for saved-design compatibility; their menu options and the Natural family controls are hidden. Loading an older recipe preserves its geometry; selecting Airy opts into the visible engine.
+
+
+## AMS colour for the centre word
+
+With **Centre shape → Text**, choose **Centre-text colour → Different filament · AMS** and set the main and centre-text filament colours. Only the actual centre glyph outlines are assigned to Filament 2. Branches, lettering on the arms, the centre baseline and connection bars remain on Filament 1. The preview shows that same separation. The option is off by default and is inactive for other centre shapes.
+
+Download **Bambu Studio 3MF**, open it as a project, map the two logical filaments to your AMS slots, check the prime tower and slice. The export contains one assembled ornament with two aligned material parts, two PLA filament profiles and per-part filament assignments. Colour parts occupy the full ornament thickness, with no overlapping interiors. STL retains the original single merged geometry and cannot carry filament assignments. ZIP exports preserve the two-colour 3MF projects and settings.
+
+The component/part ID layout follows Bambu Studio's `bbs_3mf.cpp` exporter. Filament-array keys are derived from the upstream BBL PLA profiles; one physical nozzle is retained. Tests cover watertight parts, disjoint material regions, matching total volume, centre-only colour coverage, arm text, both printers, all centre fonts, downloaded project XML, ZIPs and saved links. Native Bambu Studio slicing and a physical AMS print remain manual acceptance checks. Recipe version 9 adds the AMS mode and colours; older recipes retain their single-filament behaviour.

@@ -1,6 +1,7 @@
 // Earcut may bridge aligned holes with edges that skip collinear boundary vertices.
 // Split those triangle edges so the top/bottom and extrusion walls share exact edges.
-export function conformTriangles(flat,triangles){
+// Material cuts can create shared boundary vertices on internal edges too.
+export function conformTriangles(flat,triangles,allEdges=false){
  const count=flat.length/2,coords=flat.map(v=>Math.round(v*10000)),edges=new Map();
  const key=(a,b)=>a<b?`${a}:${b}`:`${b}:${a}`;
  for(let j=0;j<triangles.length;j+=3)for(let i=0;i<3;i++){
@@ -10,7 +11,7 @@ export function conformTriangles(flat,triangles){
  for(let i=0;i<count;i++){const key=`${Math.floor(coords[i*2]/cell)}:${Math.floor(coords[i*2+1]/cell)}`;if(!bins.has(key))bins.set(key,[]);bins.get(key).push(i);}
  const splits=new Map();
  for(const [k,{a,b,count:uses}]of edges){
-  if(uses!==1)continue;
+  if(!allEdges&&uses!==1)continue;
   const ax=coords[a*2],ay=coords[a*2+1],dx=coords[b*2]-ax,dy=coords[b*2+1]-ay,l2=dx*dx+dy*dy,points=[];
   const candidates=[];
   for(let x=Math.floor(Math.min(ax,ax+dx)/cell);x<=Math.floor(Math.max(ax,ax+dx)/cell);x++)for(let y=Math.floor(Math.min(ay,ay+dy)/cell);y<=Math.floor(Math.max(ay,ay+dy)/cell);y++){const ids=bins.get(`${x}:${y}`);if(ids)candidates.push(...ids);}

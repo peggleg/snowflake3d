@@ -27,5 +27,17 @@
     "0.20mm Standard @BBL A1",
     "Bambu PLA Basic @BBL A1"
   ],
-  "license": "AGPL-3.0; upstream profile data retained under its original license."
+  "license": "AGPL-3.0; upstream profile data retained under its original license.",
+  "ams_export": {
+    "filament_keys_retrieved": "2026-11-02",
+    "filament_key_profiles": [
+      "fdm_filament_common",
+      "fdm_filament_pla",
+      "Bambu PLA Basic @base",
+      "Bambu PLA Basic @BBL A1M",
+      "Bambu PLA Basic @BBL A1"
+    ],
+    "format_reference": "https://github.com/bambulab/BambuStudio/blob/master/src/libslic3r/Format/bbs_3mf.cpp",
+    "purge_defaults_reference": "https://github.com/bambulab/BambuStudio/blob/master/src/libslic3r/PrintConfig.cpp"
+  }
 }
