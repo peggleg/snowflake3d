@@ -44,7 +44,7 @@ function render(s,record=true){
  $('growth-options').hidden=textMode&&!mixed;
  $('growth-control').hidden=false;
  $('fullness-hint').hidden=$('complexity-hint').hidden=$('airy-example').hidden=textMode&&!mixed;
- $('natural-style-control').hidden=m.s.growth!=='natural'||(textMode&&!mixed);
+ $('natural-style-control').hidden=true;
  $('silhouette-control').hidden=m.s.growth!=='airy'||(textMode&&!mixed);
  $('complexity-hint').textContent=m.s.growth==='natural'?'Branch angles and lengths vary with the seed. Higher complexity adds finer offshoots.':m.s.growth==='airy'?'Detail is added only where a clear gap remains. Increase diameter or reduce branch thickness to fit finer offshoots.':'10–18 add nested offshoots and tip branches. For finer detail, use a larger diameter or thinner branches.';
  $('fullness-hint').textContent=m.s.growth==='natural'?'Spreads the branches and introduces open crystal panels.':m.s.growth==='airy'?'Fullness spreads the main boughs into the spaces between arms.':'Turn up for broader outer branches and shorter bare tips.';
