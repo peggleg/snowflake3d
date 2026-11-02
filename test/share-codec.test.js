@@ -24,3 +24,8 @@ test('legacy design links and compact replacements reproduce identical geometry'
  }
  assert.equal(decode('?v=1&seed=winter-2026').centre,'original');
 });
+
+test('version 1 compact links retain original growth while version 2 preserves airy recipes',()=>{
+ const original=decode('?d=AQALd2ludGVyLTIwMjYAQzk');assert.equal(original.growth,'original');assert.equal(original.seed,'winter-2026');
+ const airy=settings({growth:'airy',fullness:100,complexity:18,branch:1.2});assert.deepEqual(decode(encode(airy)),airy);
+});

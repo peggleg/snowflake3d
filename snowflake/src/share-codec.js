@@ -7,18 +7,20 @@ const FIELDS=[
  ['textLayout',['mirrored','single','flowing']],['letterSpacing'],['textWeight'],['textSize'],['textPosition'],
  ['diameter'],['thickness'],['complexity'],['branch'],['fullness'],['pattern',['mixed','open','lattice']],['printer',['mini','a1']]
 ];
+// Version 2 appends growth style; version-1 field and option order stays pinned.
+const V2_FIELDS=[...FIELDS,['growth',['original','airy']]];
 const utf8=new TextEncoder(),decoder=new TextDecoder('utf-8',{fatal:true});
 function checksum(bytes){let crc=0xffff;for(const b of bytes){crc^=b<<8;for(let i=0;i<8;i++)crc=((crc<<1)^((crc&0x8000)?0x1021:0))&0xffff;}return crc;}
 function base64(bytes){let binary='';for(const byte of bytes)binary+=String.fromCharCode(byte);return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
 export function encodeCompact(s){
- const bytes=[1];
+ const bytes=[2],fields=V2_FIELDS,baseline={...BASE,growth:'original'};
  const unsigned=value=>{do{const b=value&127;value=Math.floor(value/128);bytes.push(b|(value?128:0));}while(value);};
  const signed=value=>unsigned(value<0?-value*2-1:value*2);
  const string=value=>{const b=utf8.encode(value);unsigned(b.length);bytes.push(...b);};
  if(/^[0-9a-f]{32}$/.test(s.seed)){bytes.push(1);for(let i=0;i<32;i+=2)bytes.push(parseInt(s.seed.slice(i,i+2),16));}
  else{bytes.push(0);string(s.seed);}
- let mask=0;FIELDS.forEach(([key],i)=>{if(!Object.is(s[key],BASE[key]))mask|=1<<i;});unsigned(mask);
- FIELDS.forEach(([key,type],i)=>{
+ let mask=0;fields.forEach(([key],i)=>{if(!Object.is(s[key],baseline[key]))mask|=1<<i;});unsigned(mask);
+ fields.forEach(([key,type],i)=>{
   if(!(mask&(1<<i)))return;const value=s[key];
   if(Array.isArray(type)){bytes.push(type.indexOf(value));return;}
   if(type==='string'){string(value);return;}
@@ -37,11 +39,12 @@ export function decodeCompact(token){
  const unsigned=()=>{let value=0,factor=1;for(let i=0;i<5;i++){const b=byte();value+=(b&127)*factor;if(!(b&128))return value;factor*=128;}throw Error('Invalid design number.');};
  const signed=()=>{const n=unsigned();return n%2?-(n+1)/2:n/2;};
  const string=()=>{const length=unsigned();if(length>1024||offset+length>end)throw Error('Invalid design text.');const b=bytes.subarray(offset,offset+length);offset+=length;return decoder.decode(b);};
- if(byte()!==1)throw Error('Unsupported compact design version.');
- const s={...BASE},seedKind=byte();if(seedKind===1){let seed='';for(let i=0;i<16;i++)seed+=byte().toString(16).padStart(2,'0');s.seed=seed;}
+ const version=byte();if(version!==1&&version!==2)throw Error('Unsupported compact design version.');
+ const fields=version===1?FIELDS:V2_FIELDS;
+ const s={...BASE,growth:'original'},seedKind=byte();if(seedKind===1){let seed='';for(let i=0;i<16;i++)seed+=byte().toString(16).padStart(2,'0');s.seed=seed;}
  else if(seedKind===0)s.seed=string();else throw Error('Invalid seed encoding.');
- const mask=unsigned();if(mask>=2**FIELDS.length)throw Error('Unsupported design fields.');
- FIELDS.forEach(([key,type],i)=>{
+ const mask=unsigned();if(mask>=2**fields.length)throw Error('Unsupported design fields.');
+ fields.forEach(([key,type],i)=>{
   if(!(mask&(1<<i)))return;
   if(Array.isArray(type)){const value=type[byte()];if(value===undefined)throw Error('Invalid design option.');s[key]=value;return;}
   if(type==='string'){s[key]=string();return;}

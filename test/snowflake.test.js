@@ -143,3 +143,19 @@ test('centre styles and seeded random choices produce connected closed ornaments
  const kinds=new Set();for(let i=0;i<24;i++){const s=settings({seed:`centre-${i}`}),m=design(s);kinds.add(m.centreKind);assert.equal(design({...s,complexity:15}).centreKind,m.centreKind);}assert.ok(kinds.size>=6);
  assert.equal(defaults.centre,'random');assert.equal(decode('').centre,'random');assert.equal(decode('?v=1&seed=winter-2026').centre,'original');assert.throws(()=>settings({centre:'bad'}));assert.throws(()=>settings({centreSize:31}));
 });
+
+test('airy growth reproduces the prototype and remains connected at printer-size extremes',async()=>{
+ for(const diameter of [40,100,245])for(const branch of [1.2,2,4])for(const complexity of [6,12,18]){
+  const m=design({growth:'airy',seed:`airy-${diameter}-${branch}`,diameter,branch,complexity,fullness:100,centre:'hex-frame',printer:'a1'});checkMesh(m);assert.equal(m.bounds.maxY,diameter/2+7);
+ }
+ for(const mode of ['prompt','text']){
+  const s=settings({growth:'airy',mode,text:mode==='prompt'?'full fern':'text test',armLayout:'alternating',font:'courgette',textLayout:'flowing',complexity:18,fullness:100,branch:1.2}),m=design(s);checkMesh(m);assert.deepEqual(decode(encode(s)),s);assert.deepEqual(design(decode(encode(s))).vertices,m.vertices);assert.equal(JSON.parse(projectFiles(m)['Metadata/snowflake.json']).settings.growth,'airy');
+ }
+ assert.equal(decode('?v=1&seed=winter-2026').growth,'original');assert.throws(()=>settings({growth:'invalid'}));
+});
+test('airy fullness spreads material over a wider footprint instead of filling the same arms',()=>{
+ const area=p=>Math.abs(p.reduce((s,a,i)=>{const b=p[(i+1)%p.length];return s+a[0]*b[1]-b[0]*a[1];},0)/2);
+ const footprint=m=>{const points=m.loops.flat().filter(([x,y])=>Math.hypot(x,y)<=50.5).sort((a,b)=>a[0]-b[0]||a[1]-b[1]),cross=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]),lower=[],upper=[];for(const p of points){while(lower.length>=2&&cross(lower.at(-2),lower.at(-1),p)<=0)lower.pop();lower.push(p);}for(const p of points.slice().reverse()){while(upper.length>=2&&cross(upper.at(-2),upper.at(-1),p)<=0)upper.pop();upper.push(p);}return area(lower.slice(0,-1).concat(upper.slice(0,-1)));};
+ const material=m=>area(m.loops[0])-m.loops.slice(1).reduce((s,p)=>s+area(p),0),s={seed:'winter-2026',complexity:18,branch:1.2,fullness:100,centre:'hex-frame',pattern:'open'},old=design({...s,growth:'original'}),airy=design({...s,growth:'airy'});
+ assert.ok(footprint(airy)>footprint(old)*1.1);assert.ok(material(airy)/footprint(airy)<material(old)/footprint(old)*.9);
+});

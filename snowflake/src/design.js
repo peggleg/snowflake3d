@@ -4,9 +4,10 @@ import earcut from 'earcut';
 import {lettering,normalizeText} from './lettering.js';
 import {scriptLettering} from './script-lettering.js';
 import {centreChoices,centrePlan,replaceCentre} from './centre.js';
+import {balancedArm} from './airy-growth.js';
 import {branchDetail} from './branch-detail.js';
 import {conformTriangles} from './triangulate.js';
-export const defaults={seed:'winter-2026',mode:'random',armLayout:'all',centre:'random',centreSize:18,text:'text test',font:'stroke',textLayout:'mirrored',letterSpacing:0,textWeight:.65,textSize:100,textPosition:0,diameter:100,thickness:3,complexity:5,branch:2,fullness:0,pattern:'mixed',printer:'mini'};
+export const defaults={seed:'winter-2026',mode:'random',armLayout:'all',growth:'original',centre:'random',centreSize:18,text:'text test',font:'stroke',textLayout:'mirrored',letterSpacing:0,textWeight:.65,textSize:100,textPosition:0,diameter:100,thickness:3,complexity:5,branch:2,fullness:0,pattern:'mixed',printer:'mini'};
 export const printers={mini:{name:'Bambu Lab A1 mini',size:180},a1:{name:'Bambu Lab A1',size:256}};
 export function settings(input={}){
  const s={...defaults,...input};
@@ -15,6 +16,7 @@ export function settings(input={}){
  if(!['random','text','prompt'].includes(s.mode))throw Error('Invalid design mode.');
  if(!['stroke','montecarlo','niconne','lato','breeserif','courgette','berkshireswash'].includes(s.font))throw Error('Invalid text font.');
  if(!['random','original',...centreChoices].includes(s.centre))throw Error('Invalid centre shape.');
+ if(!['original','airy'].includes(s.growth))throw Error('Invalid branch growth style.');
  if(!['all','alternating'].includes(s.armLayout))throw Error('Invalid arm arrangement.');
  if(!['mirrored','single','flowing'].includes(s.textLayout))throw Error('Invalid text layout.');
  s.text=(s.mode==='random'||s.mode==='text'&&s.font!=='stroke')?String(s.text).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,' '):normalizeText(s.text);
@@ -38,6 +40,7 @@ export function design(input){
  const letters=s.mode==='text'&&!script?lettering(s.text,R,w):null;
  const add=p=>{const q=path(p);if(!ClipperLib.Clipper.Orientation(q))q.reverse();shapes.push(q);};
  const line=(a,b,width)=>{const dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy),nx=-dy/l*width/2,ny=dx/l*width/2;add([[a[0]+nx,a[1]+ny],[a[0]-nx,a[1]-ny],[b[0]-nx,b[1]-ny],[b[0]+nx,b[1]+ny]]);};
+ const airy=s.growth==='airy';
  const alternating=s.mode==='text'&&s.armLayout==='alternating';
  const flowing=script&&s.textLayout==='flowing';
  add(circle(0,0,flowing?Math.max(1,s.textWeight*1.5):w*2,24));
@@ -57,6 +60,7 @@ export function design(input){
   for(const side of [-1,1])line(point(R*.93,0),point(R*.96,side*length),Math.max(.8,w*.55));
   continue;
  }
+ if(airy){balancedArm({R,w,complexity:s.complexity,fullness:s.fullness,slots,point,line});continue;}
  for(let j=0;j<Math.min(s.complexity,9);j++){
  const t=.16+j*.068+(slots[j]-.5)*.035,base=R*t,len=R*(.10+slots[10+j]*.14)*(1-t)*(lush?1.4:fine?.85:1),slope=.65+slots[20+j]*.6;
  for(const side of [-1,1]){
@@ -86,11 +90,11 @@ export function design(input){
  if(centre)union=replaceCentre(union,centre);
  const cut=new ClipperLib.Clipper();cut.AddPaths(union,ClipperLib.PolyType.ptSubject,true);cut.AddPath(path(circle(0,cy,2)),ClipperLib.PolyType.ptClip,true);const tree=new ClipperLib.PolyTree();cut.Execute(ClipperLib.ClipType.ctDifference,tree,ClipperLib.PolyFillType.pftNonZero,ClipperLib.PolyFillType.pftNonZero);
  if(tree.Childs().length!==1)throw Error('Design must be one connected ornament.');
- const outer=tree.Childs()[0],loops=[outer.Contour(),...outer.Childs().map(n=>n.Contour())].map(p=>letters||script||s.complexity>9||centre?ClipperLib.Clipper.CleanPolygon(p,2):p).map(p=>p.map(v=>[v.X/scale,v.Y/scale]));
+ const outer=tree.Childs()[0],loops=[outer.Contour(),...outer.Childs().map(n=>n.Contour())].map(p=>letters||script||s.complexity>9||centre||airy?ClipperLib.Clipper.CleanPolygon(p,2):p).map(p=>p.map(v=>[v.X/scale,v.Y/scale]));
  const flat=[],holes=[];for(let i=0;i<loops.length;i++){if(i)holes.push(flat.length/2);for(const p of loops[i])flat.push(...p);}
  // Integer coordinates prevent floating-point sliver triangles at collinear intersections.
- let top=earcut(s.fullness>0||letters||script||prompt||s.complexity>9||centre?flat.map(v=>Math.round(v*scale)):flat,holes);
- if(letters||script||s.complexity>9||centre)top=conformTriangles(flat,top);
+ let top=earcut(s.fullness>0||letters||script||prompt||s.complexity>9||centre||airy?flat.map(v=>Math.round(v*scale)):flat,holes);
+ if(letters||script||s.complexity>9||centre||airy)top=conformTriangles(flat,top);
  const n=flat.length/2,vertices=[],faces=[];
  for(const z of [0,s.thickness])for(let i=0;i<n;i++)vertices.push(flat[i*2],flat[i*2+1],z);
  for(let i=0;i<top.length;i+=3){const [a,b,c]=top.slice(i,i+3);faces.push(a,c,b,a+n,b+n,c+n);}

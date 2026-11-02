@@ -28,8 +28,11 @@ function render(s,record=true){
  $('font-control').hidden=!textMode;$('text-size-control').hidden=$('text-position-control').hidden=$('text-layout-control').hidden=$('letter-spacing-control').hidden=!scriptMode;
  form.elements.text.maxLength=textMode?12:120;form.elements.text.placeholder=textMode?'text test':'e.g. full fern or delicate crystal';
  $('text-hint').textContent=textMode?(scriptMode?(flowing?'Flowing mirrored script, using name case for readability. Reduce letter weight for a more open pattern.':m.s.textLayout==='single'?'One readable word on each arm. Lato and Bree Serif work well with capitals.':'Mirrored copies create a decorative pattern. Use mixed case for script fonts; increase letter spacing if letters merge.'):'Original block lettering repeats in six arms. Longer text needs a larger diameter.'):'Create a repeatable abstract design from up to 120 characters. Try “full fern” or “delicate crystal”. Runs locally; letters are not printed.';
- $('fullness-hint').hidden=$('complexity-hint').hidden=textMode&&!mixed;
+ $('fullness-hint').hidden=$('complexity-hint').hidden=$('growth-control').hidden=$('airy-example').hidden=textMode&&!mixed;
+ $('complexity-hint').textContent=m.s.growth==='airy'?'Detail is added only where a clear gap remains. Increase diameter or reduce branch thickness to fit finer offshoots.':'10–18 add nested offshoots and tip branches. For finer detail, use a larger diameter or thinner branches.';
+ $('fullness-hint').textContent=m.s.growth==='airy'?'Fullness spreads the main boughs into the spaces between arms.':'Turn up for broader outer branches and shorter bare tips.';
  for(const name of ['complexity','fullness','pattern'])form.elements[name].closest('label').hidden=textMode&&!mixed;
+ form.elements.pattern.closest('label').hidden=(textMode&&!mixed)||m.s.growth==='airy';
  if(mixed)$('text-hint').textContent='Three text arms alternate with three snowflake branches. Complexity, fullness and branch thickness adjust the snowflake branches.';
  const extent=m.loops.reduce((r,loop)=>loop.reduce((r,[x,y])=>Math.max(r,Math.hypot(x,y)),r),0)+8;
  $('preview').setAttribute('viewBox',`${-extent} ${-extent} ${extent*2} ${extent*2}`);
@@ -51,6 +54,7 @@ if(event.target.name==='font'&&['lato','breeserif'].includes(form.elements.font.
 if(event.target.name==='font'&&['montecarlo','niconne','courgette','berkshireswash'].includes(form.elements.font.value)&&(['lato','breeserif'].includes(current.s.font)||['courgette','berkshireswash'].includes(form.elements.font.value)&&!['courgette','berkshireswash'].includes(current.s.font))){form.elements.textLayout.value='flowing';form.elements.letterSpacing.value='0';form.elements.textSize.value='110';}
 if(event.target.name==='armLayout'&&form.elements.armLayout.value==='alternating'){form.elements.complexity.value='6';form.elements.fullness.value='80';form.elements.branch.value='1.2';form.elements.pattern.value='open';}
 if(!form.reportValidity()){$('stl').disabled=$('three-mf').disabled=true;return;}render(Object.fromEntries(new FormData(form)));message('');}catch(e){message(e.message);$('stl').disabled=$('three-mf').disabled=true;}});
+$('airy-example').onclick=()=>{legacyCentre=false;render({...defaults,printer:current.s.printer,growth:'airy',seed:'winter-2026',complexity:18,branch:1.2,fullness:100,centre:'hex-frame',centreSize:18,pattern:'open'});$('reset-view').click();message('Rendered example loaded: broad boughs with protected gaps.');};
 $('batch-count').addEventListener('input',()=>{const n=Number($('batch-count').value);$('generate').textContent=n>1?`Generate ${n} snowflakes ✦`:'Generate another ✦';});
 $('generate').onclick=async()=>{
  if(!$('batch-count').reportValidity()||!form.reportValidity())return;
