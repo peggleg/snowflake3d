@@ -1,5 +1,6 @@
 import ClipperLib from 'clipper-lib';
 import {scriptFonts} from './script-lettering.js';
+export const centreTextFonts=['lato','breeserif','courgette','berkshireswash','niconne','montecarlo'];
 const SCALE=10000;
 const path=points=>points.map(([x,y])=>({X:Math.round(x*SCALE),Y:Math.round(y*SCALE)}));
 export function textCentrePlan({text,font,radius,branch}){

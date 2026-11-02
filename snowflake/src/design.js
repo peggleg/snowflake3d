@@ -3,7 +3,7 @@ import {encodeCompact,decodeCompact} from './share-codec.js';
 import earcut from 'earcut';
 import {lettering,normalizeText} from './lettering.js';
 import {scriptLettering} from './script-lettering.js';
-import {textCentrePlan} from './centre-text.js';
+import {textCentrePlan,centreTextFonts} from './centre-text.js';
 import {centreChoices,centrePlan,replaceCentre} from './centre.js';
 import {crystalArm as legacyCrystalArm} from './crystal-arms-v4.js';
 import {crystalArm,crystalFamilies} from './crystal-arms.js';
@@ -22,7 +22,7 @@ export function settings(input={}){
  if(!['random','original','text',...centreChoices].includes(s.centre))throw Error('Invalid centre shape.');
  if(!['random-all','random','legacy','star','fern','crystal','rounded',...crystalFamilies].includes(s.silhouette))throw Error('Invalid outline shape.');
  s.centreText=String(s.centreText).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,' ');
- if(s.centreText.length>12||!['lato','breeserif'].includes(s.centreFont))throw Error('Use up to 12 characters for the centre text.');
+ if(s.centreText.length>12||!centreTextFonts.includes(s.centreFont))throw Error('Use up to 12 characters for the centre text.');
  if(s.centre==='text'&&(!/[A-Za-z0-9]/.test(s.centreText)||!/^[A-Za-z0-9 \'-]+$/.test(s.centreText)))throw Error('Enter centre text using letters, numbers, spaces or hyphens.');
  if(!['random','stellar','fern','plate'].includes(s.naturalStyle))throw Error('Invalid natural crystal style.');
  if(!['original','refined'].includes(s.crystalQuality))throw Error('Invalid crystal recipe.');

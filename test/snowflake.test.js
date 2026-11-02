@@ -241,3 +241,9 @@ test('centre text is a connected printable bridge with six branch joins and pres
  const small=design({centre:'text',centreText:'LONG CENTRE',diameter:40,centreSize:10});assert.equal(small.valid,false);assert.equal(small.issue,'centreText');assert.throws(()=>exportStl(small));assert.throws(()=>export3mf(small));
  assert.throws(()=>settings({centre:'text',centreText:''}));assert.throws(()=>settings({centre:'text',centreText:'bad/text'}));
 });
+test('all six connected centre fonts keep script details and one closed printable mesh',async()=>{
+ const {centreTextFonts}=await import('../snowflake/src/centre-text.js');assert.equal(centreTextFonts.length,6);
+ for(const centreFont of centreTextFonts)for(const centreText of ['Love','Julia']){
+  const s=settings({centre:'text',centreText,centreFont,centreSize:24,branch:1.2}),m=design(s);checkMesh(m);assert.equal(m.valid,true);assert.deepEqual(design(decode(encode(s))).vertices,m.vertices);
+ }
+});
