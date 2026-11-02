@@ -4,10 +4,11 @@ import earcut from 'earcut';
 import {lettering,normalizeText} from './lettering.js';
 import {scriptLettering} from './script-lettering.js';
 import {centreChoices,centrePlan,replaceCentre} from './centre.js';
-import {balancedArm} from './airy-growth.js';
+import {crystalArm,crystalFamilies} from './crystal-arms.js';
+import {balancedArm,resolveSilhouette} from './airy-growth.js';
 import {branchDetail} from './branch-detail.js';
 import {conformTriangles} from './triangulate.js';
-export const defaults={seed:'winter-2026',mode:'random',armLayout:'all',growth:'original',silhouette:'random',centre:'random',centreSize:18,text:'text test',font:'stroke',textLayout:'mirrored',letterSpacing:0,textWeight:.65,textSize:100,textPosition:0,diameter:100,thickness:3,complexity:5,branch:2,fullness:0,pattern:'mixed',printer:'mini'};
+export const defaults={seed:'winter-2026',mode:'random',armLayout:'all',growth:'original',silhouette:'random-all',centre:'random',centreSize:18,text:'text test',font:'stroke',textLayout:'mirrored',letterSpacing:0,textWeight:.65,textSize:100,textPosition:0,diameter:100,thickness:3,complexity:5,branch:2,fullness:0,pattern:'mixed',printer:'mini'};
 export const printers={mini:{name:'Bambu Lab A1 mini',size:180},a1:{name:'Bambu Lab A1',size:256}};
 export function settings(input={}){
  const s={...defaults,...input};
@@ -16,7 +17,7 @@ export function settings(input={}){
  if(!['random','text','prompt'].includes(s.mode))throw Error('Invalid design mode.');
  if(!['stroke','montecarlo','niconne','lato','breeserif','courgette','berkshireswash'].includes(s.font))throw Error('Invalid text font.');
  if(!['random','original',...centreChoices].includes(s.centre))throw Error('Invalid centre shape.');
- if(!['random','legacy','star','fern','crystal','rounded'].includes(s.silhouette))throw Error('Invalid outline shape.');
+ if(!['random-all','random','legacy','star','fern','crystal','rounded',...crystalFamilies].includes(s.silhouette))throw Error('Invalid outline shape.');
  if(!['original','airy'].includes(s.growth))throw Error('Invalid branch growth style.');
  if(!['all','alternating'].includes(s.armLayout))throw Error('Invalid arm arrangement.');
  if(!['mirrored','single','flowing'].includes(s.textLayout))throw Error('Invalid text layout.');
@@ -61,7 +62,7 @@ export function design(input){
   for(const side of [-1,1])line(point(R*.93,0),point(R*.96,side*length),Math.max(.8,w*.55));
   continue;
  }
- if(airy){balancedArm({R,w,complexity:s.complexity,fullness:s.fullness,slots,point,line,silhouette:s.silhouette});continue;}
+ if(airy){const profile=resolveSilhouette(s.silhouette,slots),args={R,w,complexity:s.complexity,fullness:s.fullness,slots,point,line,silhouette:s.silhouette,profile};if(crystalFamilies.includes(profile))crystalArm(args);else balancedArm(args);continue;}
  for(let j=0;j<Math.min(s.complexity,9);j++){
  const t=.16+j*.068+(slots[j]-.5)*.035,base=R*t,len=R*(.10+slots[10+j]*.14)*(1-t)*(lush?1.4:fine?.85:1),slope=.65+slots[20+j]*.6;
  for(const side of [-1,1]){

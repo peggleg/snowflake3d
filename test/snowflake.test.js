@@ -156,7 +156,7 @@ test('airy growth reproduces the prototype and remains connected at printer-size
 test('airy fullness spreads material over a wider footprint instead of filling the same arms',()=>{
  const area=p=>Math.abs(p.reduce((s,a,i)=>{const b=p[(i+1)%p.length];return s+a[0]*b[1]-b[0]*a[1];},0)/2);
  const footprint=m=>{const points=m.loops.flat().filter(([x,y])=>Math.hypot(x,y)<=50.5).sort((a,b)=>a[0]-b[0]||a[1]-b[1]),cross=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]),lower=[],upper=[];for(const p of points){while(lower.length>=2&&cross(lower.at(-2),lower.at(-1),p)<=0)lower.pop();lower.push(p);}for(const p of points.slice().reverse()){while(upper.length>=2&&cross(upper.at(-2),upper.at(-1),p)<=0)upper.pop();upper.push(p);}return area(lower.slice(0,-1).concat(upper.slice(0,-1)));};
- const material=m=>area(m.loops[0])-m.loops.slice(1).reduce((s,p)=>s+area(p),0),s={seed:'winter-2026',complexity:18,branch:1.2,fullness:100,centre:'hex-frame',pattern:'open'},old=design({...s,growth:'original'}),airy=design({...s,growth:'airy'});
+ const material=m=>area(m.loops[0])-m.loops.slice(1).reduce((s,p)=>s+area(p),0),s={seed:'winter-2026',silhouette:'rounded',complexity:18,branch:1.2,fullness:100,centre:'hex-frame',pattern:'open'},old=design({...s,growth:'original'}),airy=design({...s,growth:'airy'});
  assert.ok(footprint(airy)>footprint(old)*1.1);assert.ok(material(airy)/footprint(airy)<material(old)/footprint(old)*.9);
 });
 
@@ -181,3 +181,25 @@ test('airy fullness spreads material over a wider footprint instead of filling t
   checkMesh(design({growth:'airy',silhouette:'star',centre:choice,branch,complexity:18,fullness:100}));
  }
  });
+
+test('reference crystal families remain distinct, closed and connected across settings',async()=>{
+ const {crystalFamilies}=await import('../snowflake/src/crystal-arms.js');
+ const outlines=[];
+ for(const silhouette of crystalFamilies){
+  for(const [diameter,branch] of [[40,4],[40,1.2],[100,1.2],[100,4],[245,1.2]])for(const complexity of [1,6,12,18]){
+   const s=settings({growth:'airy',silhouette,seed:'reference-family',diameter,branch,complexity,fullness:100,centre:'random',printer:'a1'}),m=design(s);
+   checkMesh(m);assert.equal(m.bounds.maxY,diameter/2+7);
+   if(diameter===100&&branch===1.2&&complexity===12){outlines.push(JSON.stringify(m.loops));assert.deepEqual(design(decode(encode(s))).vertices,m.vertices);}
+  }
+  const s=settings({growth:'airy',silhouette,mode:'text',font:'courgette',text:'text test',textLayout:'flowing',armLayout:'alternating',complexity:12,branch:1.2});checkMesh(design(s));
+ }
+ assert.equal(new Set(outlines).size,crystalFamilies.length);
+});
+test('expanded random covers all nine families without changing old random recipes',async()=>{
+ const {allSilhouettes,resolveSilhouette}=await import('../snowflake/src/airy-growth.js');
+ assert.equal(defaults.silhouette,'random-all');
+ assert.deepEqual(allSilhouettes.map((_,i)=>resolveSilhouette('random-all',Array(100).fill((i+.5)/9))),allSilhouettes);
+ const old=decode('?d=AwALd2ludGVyLTIwMjaEwBcFACQB8AEAyAEBAVpx');assert.equal(old.silhouette,'random');
+ assert.deepEqual(decode(encode(old)),old);
+ for(const choice of allSilhouettes)assert.equal(resolveSilhouette(choice,Array(100).fill(.5)),choice);
+});
