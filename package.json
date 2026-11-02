@@ -16,6 +16,7 @@
     "pages:deploy:preview": "npm test && npm run build && npm run check && npx --yes wrangler@4.151.1 pages deploy dist-snowflake --project-name snowflake3d --branch preview"
   },
   "devDependencies": {
+    "opentype.js": "^2.0.0",
     "vite": "8.3.4"
   },
   "dependencies": {

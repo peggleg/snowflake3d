@@ -68,3 +68,17 @@ test('abstract text changes geometry deterministically and retains a connected p
  assert.notDeepEqual(design({mode:'prompt',text:'winter'}).vertices,design({mode:'prompt',text:'summer'}).vertices);
  assert.equal(settings({mode:'random',text:'THIS IS A LONG DESCRIPTION!'}).mode,'random');
 });
+
+test('mirrored script fonts create watertight connected name ornaments with a fixed ring',()=>{
+ for(const font of ['montecarlo','niconne'])for(const text of ['Melissa','Ella','JOY','Li','A','2026']){
+  const m=design({mode:'text',font,text});checkMesh(m);assert.equal(m.bounds.maxY,57);assert.equal(m.s.text,text);
+ }
+ for(const diameter of [40,245])for(const font of ['montecarlo','niconne']){
+  const m=design({mode:'text',font,text:'Melissa',diameter,printer:'a1',textSize:150,textPosition:10});checkMesh(m);assert.equal(m.bounds.maxY,diameter/2+7);
+ }
+ const s=settings({mode:'text',font:'montecarlo',text:'Melissa',textSize:130,textPosition:-5});assert.deepEqual(decode('?'+encode(s)),s);assert.throws(()=>settings({font:'unknown'}));
+});
+
+test('script fonts preserve letter counters and joins across mixed-case words and punctuation',()=>{
+ for(const font of ['montecarlo','niconne'])for(const text of ['Abcdef','Ghijkl','Mnopqr','Stuvwx','Yz0123',"O'Neil"]){checkMesh(design({mode:'text',font,text}));}
+});

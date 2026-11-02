@@ -6,11 +6,15 @@ export function conformTriangles(flat,triangles){
  for(let j=0;j<triangles.length;j+=3)for(let i=0;i<3;i++){
   const a=triangles[j+i],b=triangles[j+(i+1)%3],k=key(a,b);const e=edges.get(k)||{a,b,count:0};e.count++;edges.set(k,e);
  }
+ const bins=new Map(),cell=10000;
+ for(let i=0;i<count;i++){const key=`${Math.floor(coords[i*2]/cell)}:${Math.floor(coords[i*2+1]/cell)}`;if(!bins.has(key))bins.set(key,[]);bins.get(key).push(i);}
  const splits=new Map();
  for(const [k,{a,b,count:uses}]of edges){
   if(uses!==1)continue;
   const ax=coords[a*2],ay=coords[a*2+1],dx=coords[b*2]-ax,dy=coords[b*2+1]-ay,l2=dx*dx+dy*dy,points=[];
-  for(let i=0;i<count;i++){
+  const candidates=[];
+  for(let x=Math.floor(Math.min(ax,ax+dx)/cell);x<=Math.floor(Math.max(ax,ax+dx)/cell);x++)for(let y=Math.floor(Math.min(ay,ay+dy)/cell);y<=Math.floor(Math.max(ay,ay+dy)/cell);y++){const ids=bins.get(`${x}:${y}`);if(ids)candidates.push(...ids);}
+  for(const i of candidates){
    if(i===a||i===b)continue;
    const px=coords[i*2]-ax,py=coords[i*2+1]-ay;
    if(px*dy-py*dx!==0)continue;

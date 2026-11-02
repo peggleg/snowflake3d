@@ -14,15 +14,17 @@ function render(s,record=true){
  const m=design(s);current=m;
  if(record){history=history.slice(0,index+1);history.push({...m.s});index++;}
  for(const [k,v] of Object.entries(m.s))form.elements[k].value=v;
- const textMode=m.s.mode==='text',hasText=m.s.mode!=='random';$('text-control').hidden=$('text-hint').hidden=!hasText;form.elements.text.required=hasText;
- form.elements.text.maxLength=textMode?12:120;form.elements.text.placeholder=textMode?'e.g. ELLA or JOY':'e.g. full fern or delicate crystal';
- $('text-hint').textContent=textMode?'Up to 12 letters, numbers, spaces or hyphens. Text repeats in six arms. Longer text needs a larger diameter.':'Create a repeatable abstract design from up to 120 characters. Try “full fern” or “delicate crystal”. Runs locally; letters are not printed.';
+ const textMode=m.s.mode==='text',scriptMode=textMode&&m.s.font!=='stroke',hasText=m.s.mode!=='random';$('text-control').hidden=$('text-hint').hidden=!hasText;form.elements.text.required=hasText;
+ $('font-control').hidden=!textMode;$('text-size-control').hidden=$('text-position-control').hidden=!scriptMode;
+ form.elements.text.maxLength=textMode?12:120;form.elements.text.placeholder=textMode?'e.g. Melissa or Joy':'e.g. full fern or delicate crystal';
+ $('text-hint').textContent=textMode?(scriptMode?'Mixed-case script is mirrored across six arms. Adjust height and position for a fuller or more open shape.':'Original block lettering repeats in six arms. Longer text needs a larger diameter.'):'Create a repeatable abstract design from up to 120 characters. Try “full fern” or “delicate crystal”. Runs locally; letters are not printed.';
  $('fullness-hint').hidden=textMode;
  for(const name of ['complexity','fullness','pattern'])form.elements[name].closest('label').hidden=textMode;
  const b=m.bounds,pad=10;$('preview').setAttribute('viewBox',`${b.minX-pad} ${-b.maxY-pad} ${m.width+pad*2} ${m.height+pad*2}`);
  $('flake').setAttribute('d',outline(m));
  const match=batch.findIndex(item=>item.s.seed===m.s.seed);if(match>=0)batch[match]=m;gallery();
  $('dimensions').textContent=`${m.width.toFixed(1)} × ${m.height.toFixed(1)} mm`;
+ $('text-size-value').value=`${m.s.textSize}%`;$('text-position-value').value=m.s.textPosition;
  $('complexity-value').value=m.s.complexity;$('fullness-value').value=`${m.s.fullness}%`;$('branch-value').value=`${m.s.branch} mm`;
  $('design-number').textContent=`DESIGN ${index+1}`;
  $('fit').textContent=m.issue==='text'?'Letters are too small to print clearly. Increase diameter, shorten the text or reduce branch thickness.':m.valid?`Fits ${printers[m.s.printer].name} with a 2 mm edge margin.`:`Too large for ${printers[m.s.printer].name}. Reduce diameter or choose A1. Ring is included in this check.`;
@@ -30,7 +32,7 @@ function render(s,record=true){
  window.history.replaceState(null,'',url(m.s));
 }
 form.addEventListener('input',()=>{if(!form.checkValidity())$('stl').disabled=$('three-mf').disabled=true;});
-form.addEventListener('change',event=>{try{if(event.target.name==='mode'){const mode=form.elements.mode.value,hasText=mode!=='random';$('text-control').hidden=$('text-hint').hidden=!hasText;form.elements.text.required=hasText;form.elements.text.maxLength=mode==='text'?12:120;if(hasText&&!form.elements.text.value)form.elements.text.value=mode==='text'?'JOY':'FULL FERN';if(mode==='text')form.elements.text.value=form.elements.text.value.slice(0,12);}
+form.addEventListener('change',event=>{try{if(event.target.name==='mode'){const mode=form.elements.mode.value,hasText=mode!=='random';$('text-control').hidden=$('text-hint').hidden=!hasText;form.elements.text.required=hasText;form.elements.text.maxLength=mode==='text'?12:120;if(mode==='text'&&current.s.mode!=='text'&&form.elements.font.value==='stroke')form.elements.font.value='montecarlo';if(hasText&&!form.elements.text.value)form.elements.text.value=mode==='text'?'Melissa':'FULL FERN';if(mode==='text')form.elements.text.value=form.elements.text.value.slice(0,12);}
 if(!form.reportValidity()){$('stl').disabled=$('three-mf').disabled=true;return;}render(Object.fromEntries(new FormData(form)));message('');}catch(e){message(e.message);$('stl').disabled=$('three-mf').disabled=true;}});
 $('batch-count').addEventListener('input',()=>{const n=Number($('batch-count').value);$('generate').textContent=n>1?`Generate ${n} snowflakes ✦`:'Generate another ✦';});
 $('generate').onclick=async()=>{

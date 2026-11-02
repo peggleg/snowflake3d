@@ -24,7 +24,7 @@ Deploy only `dist-snowflake/`. See [Cloudflare deployment](CLOUDFLARE.md).
 ## Features
 
 - Three design modes: Random, readable text repeated in six arms, and a text-inspired abstract pattern.
-- Readable text supports up to 12 uppercase letters A–Z, digits, spaces and hyphens; common accented letters are normalized. Longer words need a larger body. Exports are blocked when the letter openings would be too small.
+- Readable text offers MonteCarlo and Niconne mirrored script fonts with mixed case, letter-height and radial-position controls. The original block-letter font remains available and old links retain it. Up to 12 letters, digits, spaces, hyphens and apostrophes are accepted; common accented letters are normalized. Longer words need a larger body. Exports are blocked when the letter openings would be too small.
 - Abstract descriptions support up to 120 characters and deterministically influence the pattern. Keywords such as full, dense, fern, lace, delicate and airy adjust the local procedural rules; no AI service is used.
 - Both text modes remain entirely in-browser and are preserved by batch generation and design links. Text is part of the copied URL, so recipients can reproduce it.
 
