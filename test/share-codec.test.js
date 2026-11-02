@@ -1,0 +1,26 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {settings,defaults,encode,decode,design} from '../snowflake/src/design.js';
+
+test('compact links omit defaults, pack generated seeds and retain exact settings',()=>{
+ const samples=[defaults,settings({seed:'0123456789abcdef0123456789abcdef'}),settings({seed:'❄️雪flake',mode:'prompt',text:'delicate winter 雪 ❄️',diameter:100.000001,thickness:Math.PI,branch:1.23456789,textWeight:.987654,centreSize:16.73,textPosition:-0}),settings({mode:'text',armLayout:'alternating',font:'courgette',text:'Text Test',textLayout:'flowing',centre:'web',complexity:18,branch:1.2})];
+ for(const s of samples){const query=encode(s);assert.ok(query.startsWith('d='));assert.deepEqual(decode('?'+query),s);assert.ok(query.length<new URLSearchParams({v:'1',...s}).toString().length);}
+ assert.ok(encode(samples[1]).length<=32);
+});
+test('all options and numeric ranges survive compact round trips',()=>{
+ const options={mode:['random','text','prompt'],armLayout:['all','alternating'],centre:['random','original','solid-star','star-frame','hexagon','hex-frame','circle','ring','rosette','web'],font:['stroke','montecarlo','niconne','lato','breeserif','courgette','berkshireswash'],textLayout:['mirrored','single','flowing'],pattern:['mixed','open','lattice'],printer:['mini','a1']};
+ for(const [key,values]of Object.entries(options))for(const value of values){const s=settings({[key]:value});assert.deepEqual(decode(encode(s)),s);}
+ for(const value of [-10,-2.15,-0,0,3.3333333333333335,10]){const s=settings({textPosition:value});assert.deepEqual(decode(encode(s)),s);}
+ const s=settings({seed:'S'.repeat(128),mode:'prompt',text:'winter '.repeat(17).trim(),diameter:245,thickness:8,complexity:18,branch:4,centreSize:30,fullness:100,textSize:150,letterSpacing:40});assert.deepEqual(decode(encode(s)),s);
+});
+test('malformed and corrupted compact links fail before geometry generation',()=>{
+ const query=encode(settings({seed:'0123456789abcdef0123456789abcdef',complexity:18})),token=query.slice(2);
+ for(const bad of ['',token.slice(0,-1),token.slice(0,10),token.slice(0,8)+(token[8]==='A'?'B':'A')+token.slice(9),'!bad!', 'A'.repeat(4097)])assert.throws(()=>decode('?d='+bad));
+ assert.throws(()=>decode(query+'&'+query));assert.throws(()=>decode('?v=2&seed=x'));
+});
+test('legacy design links and compact replacements reproduce identical geometry',()=>{
+ for(const query of ['?v=1&seed=winter-2026&diameter=100&complexity=5','?v=1&seed=other&centre=web&complexity=12&branch=1.2','?v=1&mode=text&font=courgette&text=Text+Test&textLayout=flowing&armLayout=alternating&centre=random']){
+  const s=decode(query),compact=decode(encode(s));assert.deepEqual(compact,s);assert.deepEqual(design(s).vertices,design(compact).vertices);assert.deepEqual(design(s).faces,design(compact).faces);
+ }
+ assert.equal(decode('?v=1&seed=winter-2026').centre,'original');
+});

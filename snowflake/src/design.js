@@ -1,4 +1,5 @@
 import ClipperLib from 'clipper-lib';
+import {encodeCompact,decodeCompact} from './share-codec.js';
 import earcut from 'earcut';
 import {lettering,normalizeText} from './lettering.js';
 import {scriptLettering} from './script-lettering.js';
@@ -99,5 +100,6 @@ export function design(input){
  const issue=!fits?'plate':(letters&&!letters.printable)||(script&&!script.printable)?'text':'';
  return {s,loops,vertices:new Float64Array(vertices),faces:new Uint32Array(faces),bounds,width,height,valid,limit,issue,centreKind:centre?.kind||'original'};
 }
-export function encode(s){return new URLSearchParams({v:'1',...s}).toString();}
-export function decode(search){const q=new URLSearchParams(search);if(q.has('v')&&q.get('v')!=='1')throw Error('Unsupported design version.');return settings({...Object.fromEntries(Object.entries(defaults).filter(([k])=>q.has(k)).map(([k])=>[k,q.get(k)])),...(q.has('v')&&!q.has('centre')?{centre:'original'}:{})});}
+export function encode(s){return 'd='+encodeCompact(settings(s));}
+export function decode(search){const q=new URLSearchParams(search);if(q.has('d')){if(q.getAll('d').length!==1)throw Error('Ambiguous design link.');return settings(decodeCompact(q.get('d')));}
+ if(q.has('v')&&q.get('v')!=='1')throw Error('Unsupported design version.');return settings({...Object.fromEntries(Object.entries(defaults).filter(([k])=>q.has(k)).map(([k])=>[k,q.get(k)])),...(q.has('v')&&!q.has('centre')?{centre:'original'}:{})});}
