@@ -33,6 +33,32 @@ Do not grant collaborators access to the repository just to let them use the gen
 
 The production bundle needs no secrets, database, Worker bindings or SITE_URL. Never put a Cloudflare token in a Vite variable or in this repository.
 
+## Preview deployment
+
+The `preview` branch is the staging source. Production remains on `main`.
+
+For a Git-integrated Pages project:
+
+1. Open **Workers & Pages → snowflake3d → Settings → Builds & deployments → Branch control** (the exact section name varies by dashboard).
+2. Keep **Production branch** set to `main`.
+3. Enable **Preview deployments** for `preview`, either by selecting **All non-production branches** or a custom include rule of `preview`. Ensure it is not excluded and automatic builds are enabled.
+4. Use build command `npm run build`, output `dist-snowflake`, repository root blank, and set **NODE_VERSION=24** for the **Preview** environment as well as Production.
+5. A push to `preview` starts a preview build. If the branch was pushed before Git integration or branch controls were configured, create a deployment for that branch from the dashboard when offered, or push another commit to `preview` after enabling it.
+6. Open the successful preview deployment's **Visit site** link and append `/snowflake`. For a project whose assigned Pages hostname is `snowflake3d.pages.dev`, the stable branch alias is expected to be `https://preview.snowflake3d.pages.dev/snowflake`. Cloudflare also assigns an immutable deployment URL. Use the URLs Cloudflare actually returns; this document does not confirm that either URL is live.
+
+The preview builds the same standalone generator and includes noindex headers. It has no production custom domain. Preview and production access rules are separate; noindex does not restrict visitors. If a shared link is copied while on preview, its hostname points the recipient to preview.
+
+For an authenticated manual upload to the existing Pages project:
+
+```sh
+npm ci
+npm run pages:deploy:preview
+```
+
+This command explicitly uploads with `--branch preview`, without promoting `main`. The project must already exist. It defaults to the project name `snowflake3d`; update the script if your actual Pages project name differs. Do not use `pages:deploy` when you intend to deploy a preview, because that command targets production `main`.
+
+Verify the preview's `/snowflake`, root redirect, 24-design generation, seed/link reload, STL and 3MF downloads, and a 404 for unrelated routes before promoting changes. To promote reviewed code, merge `preview` into `main`; a Git-integrated project then deploys production.
+
 ## If a snowflake Pages project already exists
 
 If it is connected to the old repository, create the new project above rather than changing the lithophane project's source or deployment settings. If it uses Direct Upload, choose whether to keep manual uploads or create the new Git-integrated project for automatic deployments; Cloudflare does not support switching a Direct Upload project to Git integration in place.
