@@ -1,9 +1,11 @@
+import {joinedFrame} from './joined-frame.js';
 import ClipperLib from 'clipper-lib';
 import {segmentDistance,distance} from './growth-spacing.js';
 export {crystalFamilies} from './crystal-arms-v4.js';
 // Every structure uses the same physical clearances and printable detail widths.
-export function crystalArm({profile,R,w,complexity,fullness,slots,point,line}){
+export function crystalArm({profile,R,w,complexity,fullness,slots,point,line,add,hanger=false}){
  const gap=Math.max(.9,R*.018),fine=Math.max(.8,w*.65),primary=Math.max(.9,w*.85),spread=.78+fullness*.0022,jitter=.94+slots[94]*.06;
+ let spineTip=R;
  const segments=[{a:[0,0],b:[R,0],width:w,parent:-1}];
  const inside=(p,width)=>Math.hypot(...p)+width/2<R&&Math.abs(p[1])+width/2+gap<(p[0]-width/2)*Math.tan(Math.PI/6);
  const stroke=(a,b,width=w)=>line(point(...a),point(...b),width);
@@ -31,7 +33,9 @@ export function crystalArm({profile,R,w,complexity,fullness,slots,point,line}){
   if(!ClipperLib.Clipper.Orientation(contour))contour.reverse();
   const offset=new ClipperLib.ClipperOffset(),open=[];offset.AddPath(contour,ClipperLib.JoinType.jtMiter,ClipperLib.EndType.etClosedPolygon);offset.Execute(open,-(width+gap)/2*10000);
   if(!open.length)return null;
-  const ids=[];points.forEach((a,i)=>{const b=points[(i+1)%points.length],id=segments.length;segments.push({a,b,width,parent:-2});ids.push(id);if(mirrored)mirrorStroke(a,b,width);else stroke(a,b,width);});return ids;
+  const ids=[];points.forEach((a,i)=>{const b=points[(i+1)%points.length],id=segments.length;segments.push({a,b,width,parent:-2});ids.push(id);});
+  for(const triangle of joinedFrame(points,width).triangles)for(const side of mirrored?[-1,1]:[1])add(triangle.map(([x,y])=>point(x,y*side)));
+  return ids;
  };
  const lance=(base,angle,length,halfWidth,width=primary)=>{
   if(halfWidth<width+gap)return null;
@@ -65,7 +69,8 @@ export function crystalArm({profile,R,w,complexity,fullness,slots,point,line}){
    if(r*Math.sqrt(3)-2*w<gap*2)return null;
    return frame(Array.from({length:6},(_,i)=>[x+r*Math.cos(i*Math.PI/3),y+r*Math.sin(i*Math.PI/3)]),w,mirror);
   };
-  hex(R*.83,0,Math.min(R*.15,R*.17-w/2));
+  const tipRadius=Math.min(R*.15,R*.17-w/2);
+  if(hex(R*.83,0,tipRadius))spineTip=R*.83+tipRadius;
   const roots=complexity<7?[.43]:[.31,.53];
   roots.forEach((t,i)=>{
    const length=R*(.19+i*.10)*spread*jitter,r=Math.max((w+gap)/.866,R*(.065+i*.02)),x=R*t+length*.5,y=length*Math.sqrt(3)/2;
@@ -92,5 +97,6 @@ export function crystalArm({profile,R,w,complexity,fullness,slots,point,line}){
    decorate(grow([R*t,0],Math.PI/3,length,primary),[.38,.68]);
   }
  }
- return {gap,segments};
+ stroke([0,0],[hanger?R:spineTip,0],w);
+ return {gap,segments,spineTip:hanger?R:spineTip};
 }

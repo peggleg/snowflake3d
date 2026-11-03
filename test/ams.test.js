@@ -36,3 +36,6 @@ test('AMS material separation stays closed across body sizes, branch widths and 
   const m=design({centre:'text',centreText:diameter===40?'A':'2026',centreFont,centreSize,centreAms:'on',diameter,branch,thickness,printer:'a1'});assert.equal(m.valid,true);for(const p of m.parts)closed(p);assert.ok(Math.abs(m.parts.reduce((v,p)=>v+volume(p),0)-volume(m))<.01);
  }
 });
+test('AMS parts stay closed with joined crystal frames',()=>{
+ for(const silhouette of ['hex-tips','plates','leaves']){const m=design({centre:'text',centreText:'LOVE',centreSize:24,centreAms:'on',silhouette,growth:'airy',complexity:18,fullness:100,branch:1.2});assert.equal(m.valid,true);for(const p of m.parts)closed(p);assert.ok(Math.abs(m.parts.reduce((v,p)=>v+volume(p),0)-volume(m))<1e-3);}
+});

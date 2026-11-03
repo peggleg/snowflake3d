@@ -62,7 +62,8 @@ export function design(input){
  for(let arm=0;arm<6;arm++){
  const angle=Math.PI/2+arm*Math.PI/3,point=(x,y)=>[x*Math.cos(angle)-y*Math.sin(angle),x*Math.sin(angle)+y*Math.cos(angle)];
  const textArm=!alternating||arm%2===1;
- line(point(0,0),point(R,0),textArm?(flowing?s.textWeight:letters||script?Math.max(.8,w*.55):w):w);
+ const profile=resolveSilhouette(s.silhouette,slots),refinedBranch=s.growth==='airy'&&s.crystalQuality==='refined'&&crystalFamilies.includes(profile)&&!((script||letters)&&textArm);
+ if(!refinedBranch)line(point(0,0),point(R,0),textArm?(flowing?s.textWeight:letters||script?Math.max(.8,w*.55):w):w);
  if(script&&textArm){
   for(const side of s.textLayout==='single'?[1]:[-1,1])for(const contour of script.paths){const q=path(contour.map(([x,y])=>point(x,y*side)));if(side<0)q.reverse();shapes.push(q);}
   continue;
@@ -76,7 +77,7 @@ export function design(input){
   continue;
  }
  if(s.growth==='natural'){naturalArm({R,w,complexity:s.complexity,fullness:s.fullness,centreSize:s.centreSize,seed:s.mode==='prompt'?s.text+'|'+s.seed:s.seed,naturalStyle:s.naturalStyle,point,line,add});continue;}
- if(airy){const profile=resolveSilhouette(s.silhouette,slots),args={R,w,complexity:s.complexity,fullness:s.fullness,slots,point,line,add,silhouette:s.silhouette,profile};if(crystalFamilies.includes(profile))(s.crystalQuality==='original'?legacyCrystalArm:crystalArm)(args);else balancedArm(args);continue;}
+ if(airy){const args={R,w,complexity:s.complexity,fullness:s.fullness,slots,point,line,add,silhouette:s.silhouette,profile,hanger:arm===0};if(crystalFamilies.includes(profile))(s.crystalQuality==='original'?legacyCrystalArm:crystalArm)(args);else balancedArm(args);continue;}
  for(let j=0;j<Math.min(s.complexity,9);j++){
  const t=.16+j*.068+(slots[j]-.5)*.035,base=R*t,len=R*(.10+slots[10+j]*.14)*(1-t)*(lush?1.4:fine?.85:1),slope=.65+slots[20+j]*.6;
  for(const side of [-1,1]){
