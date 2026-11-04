@@ -114,3 +114,8 @@ Choosing either style raises centre size to 26% when needed. Open styles select 
 
 
 Derived outline fonts use Snowflake-specific primary names. Original source families, copyright notices, OFL licences and conversion details are retained in `snowflake/src/fonts/SOURCES.md`, `catalog.json` and `MODIFICATIONS.md`, and the public third-party notices. Legacy recipe identifiers remain unchanged. The naming update does not change glyphs, kerning or generated geometry.
+
+
+## Privacy enquiry form
+
+`/contact` is a separate form backed by `/api/contact` in Cloudflare Pages Functions. Submissions are emailed to one private verified destination, with server-side Turnstile validation and no website database. Runtime settings are required before the form becomes available. See [CONTACT_SETUP.md](CONTACT_SETUP.md). The generator and static assets remain outside the Function route.

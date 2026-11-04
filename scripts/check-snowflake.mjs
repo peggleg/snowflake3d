@@ -1,7 +1,7 @@
 import {readFile,readdir} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const root=new URL('../dist-snowflake/',import.meta.url),files=await readdir(root);
-assert.deepEqual(files.sort(),['THIRD_PARTY_NOTICES.txt','404.html','_headers','_redirects','assets','favicon.svg','snowflake.html','robots.txt'].sort());
+assert.deepEqual(files.sort(),['THIRD_PARTY_NOTICES.txt','404.html','contact.html','_routes.json','_headers','_redirects','assets','favicon.svg','snowflake.html','robots.txt'].sort());
 const html=await readFile(new URL('snowflake.html',root),'utf8');
 assert.ok(html.includes('Snowflake workshop'));
 assert.ok(html.includes('rel="icon"')&&html.includes('/favicon.svg?v=1'));
@@ -17,3 +17,5 @@ const assets=await readdir(new URL('assets/',root));
 assert.ok(assets.some(f=>f.endsWith('.js'))&&assets.some(f=>f.endsWith('.css')));
 assert.ok(assets.every(f=>/\.(js|css)$/.test(f)),'No main-site image/worker assets');
 console.log('Standalone build verified: generator only, isolated routes, no main-site navigation/assets/sitemap.');
+
+const routes=JSON.parse(await readFile(new URL('_routes.json',root),'utf8'));assert.deepEqual(routes.include,['/api/contact']);const contact=await readFile(new URL('contact.html',root),'utf8');assert.ok(contact.includes('Privacy enquiries')&&contact.includes('noindex,nofollow'));
