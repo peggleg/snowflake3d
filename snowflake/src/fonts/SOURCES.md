@@ -1,4 +1,21 @@
-# Bundled script-font outlines
+# Snowflake3D derived outline fonts
+
+These are modified, reusable outline datasets under SIL Open Font License 1.1. Their primary names differ from their upstream sources. Original source families are identified below only for attribution and reproducible conversion.
+
+| Primary derivative name | Upstream source family | Stable recipe key |
+| --- | --- | --- |
+| Snowflake Clear Sans | Lato | `lato` |
+| Snowflake Rounded Serif | Bree Serif | `breeserif` |
+| Snowflake Flowing Script | Courgette | `courgette` |
+| Snowflake Ornamental Serif | Berkshire Swash | `berkshireswash` |
+| Snowflake Elegant Script | Niconne | `niconne` |
+| Snowflake Fine Calligraphy | MonteCarlo | `montecarlo` |
+
+`catalog.json` records the primary names, source attribution, original copyright headers and modification notice. Generated JSON datasets carry the same metadata. Legacy filenames and recipe keys are compatibility identifiers, not primary font-family names. Keep them stable so shared designs continue to work. The UI uses the derivative names; the complete original notices remain in each `*-OFL.txt` and in the published third-party notices. The source authors do not endorse the derivatives.
+
+See [MODIFICATIONS.md](MODIFICATIONS.md) for changes. On 4 November 2026 only names and attribution metadata changed; glyph coordinates, kerning and bridge data stayed unchanged.
+
+## Upstream sources and regeneration
 
 MonteCarlo: https://github.com/google/fonts/tree/main/ofl/montecarlo
 

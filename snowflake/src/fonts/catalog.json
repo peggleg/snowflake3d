@@ -1,0 +1,56 @@
+{
+  "lato": {
+    "name": "Snowflake Clear Sans",
+    "license": "OFL-1.1",
+    "sourceFont": "Lato",
+    "sourceUrl": "https://github.com/google/fonts/tree/main/ofl/lato",
+    "copyright": "Copyright (c) 2010-2014 by tyPoland Lukasz Dziedzic (team@latofonts.com) with Reserved Font Name \"Lato\"",
+    "modificationNotice": "Modified outline dataset for Snowflake3D: character subset, flattened and simplified polygons, kerning data and printable glyph-bridge hints. Renamed from the source font; original authors do not endorse this derivative.",
+    "licenseNotice": "/THIRD_PARTY_NOTICES.txt"
+  },
+  "breeserif": {
+    "name": "Snowflake Rounded Serif",
+    "license": "OFL-1.1",
+    "sourceFont": "Bree Serif",
+    "sourceUrl": "https://github.com/google/fonts/tree/main/ofl/breeserif",
+    "copyright": "Copyright (c) 2011, TypeTogether (www.type-together.com), with Reserved Font Names \"Bree\" and \"Bree Serif\"",
+    "modificationNotice": "Modified outline dataset for Snowflake3D: character subset, flattened and simplified polygons, kerning data and printable glyph-bridge hints. Renamed from the source font; original authors do not endorse this derivative.",
+    "licenseNotice": "/THIRD_PARTY_NOTICES.txt"
+  },
+  "courgette": {
+    "name": "Snowflake Flowing Script",
+    "license": "OFL-1.1",
+    "sourceFont": "Courgette",
+    "sourceUrl": "https://github.com/google/fonts/tree/main/ofl/courgette",
+    "copyright": "Copyright (c) 2012 by Sorkin Type Co (www.sorkintype.com), with Reserved Font Name \"Courgette\".",
+    "modificationNotice": "Modified outline dataset for Snowflake3D: character subset, flattened and simplified polygons, kerning data and printable glyph-bridge hints. Renamed from the source font; original authors do not endorse this derivative.",
+    "licenseNotice": "/THIRD_PARTY_NOTICES.txt"
+  },
+  "berkshireswash": {
+    "name": "Snowflake Ornamental Serif",
+    "license": "OFL-1.1",
+    "sourceFont": "Berkshire Swash",
+    "sourceUrl": "https://github.com/google/fonts/tree/main/ofl/berkshireswash",
+    "copyright": "Copyright (c) 2012 by Brian J. Bonislawsky DBA Astigmatic (AOETI) (astigma@astigmatic.com), with Reserved Font Names \"Berkshire Swash\"",
+    "modificationNotice": "Modified outline dataset for Snowflake3D: character subset, flattened and simplified polygons, kerning data and printable glyph-bridge hints. Renamed from the source font; original authors do not endorse this derivative.",
+    "licenseNotice": "/THIRD_PARTY_NOTICES.txt"
+  },
+  "niconne": {
+    "name": "Snowflake Elegant Script",
+    "license": "OFL-1.1",
+    "sourceFont": "Niconne",
+    "sourceUrl": "https://github.com/google/fonts/tree/main/ofl/niconne",
+    "copyright": "Copyright (c) 2011, Vernon Adams (vern@newtypography.co.uk), with Reserved Font Name Nicone",
+    "modificationNotice": "Modified outline dataset for Snowflake3D: character subset, flattened and simplified polygons, kerning data and printable glyph-bridge hints. Renamed from the source font; original authors do not endorse this derivative.",
+    "licenseNotice": "/THIRD_PARTY_NOTICES.txt"
+  },
+  "montecarlo": {
+    "name": "Snowflake Fine Calligraphy",
+    "license": "OFL-1.1",
+    "sourceFont": "MonteCarlo",
+    "sourceUrl": "https://github.com/google/fonts/tree/main/ofl/montecarlo",
+    "copyright": "Copyright 2011 The MonteCarlo Project Authors (https://github.com/googlefonts/monte-carlo)",
+    "modificationNotice": "Modified outline dataset for Snowflake3D: character subset, flattened and simplified polygons, kerning data and printable glyph-bridge hints. Renamed from the source font; original authors do not endorse this derivative.",
+    "licenseNotice": "/THIRD_PARTY_NOTICES.txt"
+  }
+}

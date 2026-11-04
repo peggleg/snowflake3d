@@ -1,3 +1,35 @@
+Snowflake3D modified outline datasets
+
+The following are modified font-outline datasets, not the original font releases.
+They use SIL Open Font License 1.1; their original notices are retained below.
+Legacy recipe identifiers and filenames identify sources for compatibility only.
+
+Snowflake Clear Sans
+  Derived from: Lato
+  Source: https://github.com/google/fonts/tree/main/ofl/lato
+Snowflake Rounded Serif
+  Derived from: Bree Serif
+  Source: https://github.com/google/fonts/tree/main/ofl/breeserif
+Snowflake Flowing Script
+  Derived from: Courgette
+  Source: https://github.com/google/fonts/tree/main/ofl/courgette
+Snowflake Ornamental Serif
+  Derived from: Berkshire Swash
+  Source: https://github.com/google/fonts/tree/main/ofl/berkshireswash
+Snowflake Elegant Script
+  Derived from: Niconne
+  Source: https://github.com/google/fonts/tree/main/ofl/niconne
+Snowflake Fine Calligraphy
+  Derived from: MonteCarlo
+  Source: https://github.com/google/fonts/tree/main/ofl/montecarlo
+
+Modifications: character subsetting, curve flattening, polygon simplification,
+kerning extraction and printable glyph-bridge hints. Primary derivative names
+were changed on 4 November 2026. The original font authors do not endorse these
+derivatives or Snowflake3D. Original copyright statements, reserved-name
+declarations and the OFL texts below continue to apply. Website private-use
+terms do not restrict rights granted by third-party font or software licences.
+
 Bambu Studio printer, filament and process profile data
 Copyright Bambu Lab and Bambu Studio contributors.
 Source: https://github.com/bambulab/BambuStudio/tree/master/resources/profiles/BBL

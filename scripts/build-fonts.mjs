@@ -1,4 +1,5 @@
 import opentype from 'opentype.js';
+import fontCatalog from '../snowflake/src/fonts/catalog.json' with {type:'json'};
 import ClipperLib from 'clipper-lib';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {resolve} from 'node:path';
@@ -23,6 +24,7 @@ function flatten(commands){
 }
 const area=c=>c.reduce((a,p,i)=>{const q=c[(i+1)%c.length];return a+p[0]*q[1]-q[0]*p[1];},0)/2;
 for(const name of process.argv.slice(3).length?process.argv.slice(3):['montecarlo','niconne','lato','breeserif']){
+ if(!fontCatalog[name])throw Error(`Unknown font recipe identifier: ${name}`);
  const bytes=await readFile(resolve(source,`${name}.ttf`)),font=opentype.parse(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength)),glyphs={};
  for(let code=32;code<=126;code++){
   const char=String.fromCharCode(code);if(!/[A-Za-z0-9 '-]/.test(char))continue;const g=font.charToGlyph(char),contours=flatten(g.getPath(0,0,1).commands).map(c=>ClipperLib.Clipper.CleanPolygon(c.map(([x,y])=>({X:Math.round(x*1000000),Y:Math.round(y*1000000)})),800).map(p=>[p.X/1000000,p.Y/1000000])).filter(c=>c.length>=3);
@@ -36,6 +38,6 @@ for(const name of process.argv.slice(3).length?process.argv.slice(3):['montecarl
   glyphs[char]={advance:g.advanceWidth/font.unitsPerEm,contours,bridges};
  }
  const kern={};for(const a of Object.keys(glyphs))for(const b of Object.keys(glyphs)){const k=font.getKerningValue(font.charToGlyph(a),font.charToGlyph(b))/font.unitsPerEm;if(k)kern[a+b]=k;}
- await writeFile(`snowflake/src/fonts/${name}.json`,JSON.stringify({name,license:'OFL-1.1',glyphs,kern})+'\n');
+ await writeFile(`snowflake/src/fonts/${name}.json`,JSON.stringify({...fontCatalog[name],glyphs,kern})+'\n');
  console.log(name,Object.keys(glyphs).length,'glyphs');
 }
