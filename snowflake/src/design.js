@@ -3,6 +3,7 @@ import {encodeCompact,decodeCompact} from './share-codec.js';
 import earcut from 'earcut';
 import {lettering,normalizeText} from './lettering.js';
 import {scriptLettering} from './script-lettering.js';
+import {framedTextPlan,framedTextStyles} from './framed-text.js';
 import {textCentrePlan,centreTextFonts} from './centre-text.js';
 import {centreChoices,centrePlan,replaceCentre} from './centre.js';
 import {crystalArm as legacyCrystalArm} from './crystal-arms-v4.js';
@@ -23,7 +24,8 @@ export function settings(input={}){
  if(!['random','original','text',...centreChoices].includes(s.centre))throw Error('Invalid centre shape.');
  if(!['random-all','random','legacy','star','fern','crystal','rounded',...crystalFamilies].includes(s.silhouette))throw Error('Invalid outline shape.');
  s.centreText=String(s.centreText).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,' ');
- if(!['letters','bar'].includes(s.centreJoin))throw Error('Invalid centre letter connection.');
+ if(!['letters','bar',...framedTextStyles].includes(s.centreJoin))throw Error('Invalid centre letter connection.');
+ if(s.centre==='text'&&s.centreJoin.startsWith('solid-'))s.centreAms='on';
  if(!['off','on'].includes(s.centreAms))throw Error('Invalid centre colour mode.');
  for(const key of ['mainColour','centreColour']){s[key]=String(s[key]).toUpperCase();if(!/^#[0-9A-F]{6}$/.test(s[key]))throw Error('Choose a valid filament colour.');}
  if(s.centreText.length>12||!centreTextFonts.includes(s.centreFont))throw Error('Use up to 12 characters for the centre text.');
@@ -50,7 +52,7 @@ export function design(input){
  const s=settings(input),rng=random(s.mode==='prompt'?`text:${s.text}|${s.seed}`:s.seed),slots=Array.from({length:100},rng),R=s.diameter/2,w=s.branch,shapes=[];
  const naturalCentres=['hex-frame','hexagon','ring','rosette','solid-star','star-frame','web','circle'];
  const centreChoice=s.growth==='natural'&&s.centre==='random'?naturalCentres[Math.min(7,Math.floor(slots[90]*8))]:s.centre;
- const centre=s.centre==='original'?null:s.centre==='text'?textCentrePlan({text:s.centreText,font:s.centreFont,join:s.centreJoin,radius:R*s.centreSize/100,branch:w}):centrePlan({choice:centreChoice,radius:R*s.centreSize/100,branch:w,slots,matched:s.growth==='natural'||s.growth==='airy'&&s.silhouette!=='legacy'});
+ const centre=s.centre==='original'?null:s.centre==='text'?(framedTextStyles.includes(s.centreJoin)?framedTextPlan({text:s.centreText,font:s.centreFont,radius:R*s.centreSize/100,branch:w,style:s.centreJoin,slots}):textCentrePlan({text:s.centreText,font:s.centreFont,join:s.centreJoin,radius:R*s.centreSize/100,branch:w})):centrePlan({choice:centreChoice,radius:R*s.centreSize/100,branch:w,slots,matched:s.growth==='natural'||s.growth==='airy'&&s.silhouette!=='legacy'});
  const prompt=s.mode==='prompt',lush=prompt&&/FULL|DENSE|FERN|BROAD|LACE|LEAF/.test(s.text),fine=prompt&&/DELICATE|FINE|THIN|AIRY/.test(s.text);
  const script=s.mode==='text'&&s.font!=='stroke'?scriptLettering(s.text,R,w,s.font,s.textSize*(.96+slots[81]*.08),s.textPosition+(slots[82]-.5)*4,s.textLayout,s.letterSpacing,s.textWeight):null;
  const letters=s.mode==='text'&&!script?lettering(s.text,R,w):null;
@@ -106,9 +108,15 @@ export function design(input){
  const cy=R+3;add(circle(0,cy,4));
  const clip=new ClipperLib.Clipper();clip.AddPaths(shapes,ClipperLib.PolyType.ptSubject,true);let union=new ClipperLib.Paths();clip.Execute(ClipperLib.ClipType.ctUnion,union,ClipperLib.PolyFillType.pftNonZero,ClipperLib.PolyFillType.pftNonZero);
  if(centre)union=replaceCentre(union,centre);
+ const framed=s.centre==='text'&&framedTextStyles.includes(s.centreJoin);
+ if(framed){
+  // Resolve sub-micron branch point contacts before making either mesh or AMS parts.
+  const offset=(paths,delta)=>{const tool=new ClipperLib.ClipperOffset(2,.25),out=[];tool.AddPaths(paths,ClipperLib.JoinType.jtMiter,ClipperLib.EndType.etClosedPolygon);tool.Execute(out,delta);return out;};
+  union=offset(offset(union,3),-3);
+ }
  const cut=new ClipperLib.Clipper();cut.AddPaths(union,ClipperLib.PolyType.ptSubject,true);cut.AddPath(path(circle(0,cy,2)),ClipperLib.PolyType.ptClip,true);const tree=new ClipperLib.PolyTree();cut.Execute(ClipperLib.ClipType.ctDifference,tree,ClipperLib.PolyFillType.pftNonZero,ClipperLib.PolyFillType.pftNonZero);
  if(tree.Childs().length!==1)throw Error('Design must be one connected ornament.');
- const outer=tree.Childs()[0],loops=[outer.Contour(),...outer.Childs().map(n=>n.Contour())].map(p=>letters||script||s.complexity>9||centre||airy?ClipperLib.Clipper.CleanPolygon(p,2):p).filter(p=>p.length>=3&&Math.abs(ClipperLib.Clipper.Area(p))>1).map(p=>p.map(v=>[v.X/scale,v.Y/scale]));
+ const outer=tree.Childs()[0],loops=[outer.Contour(),...outer.Childs().map(n=>n.Contour())].map(p=>framed?p:letters||script||s.complexity>9||centre||airy?ClipperLib.Clipper.CleanPolygon(p,2):p).filter(p=>p.length>=3&&Math.abs(ClipperLib.Clipper.Area(p))>1).map(p=>p.map(v=>[v.X/scale,v.Y/scale]));
  const flat=[],holes=[];for(let i=0;i<loops.length;i++){if(i)holes.push(flat.length/2);for(const p of loops[i])flat.push(...p);}
  // Integer coordinates prevent floating-point sliver triangles at collinear intersections.
  let top=earcut(s.fullness>0||letters||script||prompt||s.complexity>9||centre||airy?flat.map(v=>Math.round(v*scale)):flat,holes);

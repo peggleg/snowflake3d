@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import ClipperLib from 'clipper-lib';
 import {design,encode,decode} from '../snowflake/src/design.js';
 import {projectFiles,exportStl,export3mf} from '../snowflake/src/export.js';
+import {framedTextPlan} from '../snowflake/src/framed-text.js';
 import {textCentrePlan,centreTextFonts} from '../snowflake/src/centre-text.js';
 function volume(m){let v=0;for(let i=0;i<m.faces.length;i+=3){const [a,b,c]=Array.from(m.faces.slice(i,i+3),j=>Array.from(m.vertices.slice(j*3,j*3+3)));v+=(a[0]*(b[1]*c[2]-b[2]*c[1])+a[1]*(b[2]*c[0]-b[0]*c[2])+a[2]*(b[0]*c[1]-b[1]*c[0]))/6;}return v;}
 function closed(m){const edges=new Map(),used=new Set();for(let i=0;i<m.faces.length;i+=3){const ids=Array.from(m.faces.slice(i,i+3));assert.equal(new Set(ids).size,3);const [a,b,c]=ids.map(j=>Array.from(m.vertices.slice(j*3,j*3+3))),u=b.map((n,j)=>n-a[j]),v=c.map((n,j)=>n-a[j]);assert.ok(Math.hypot(u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0])>1e-10,'nondegenerate faces');for(let j=0;j<3;j++){const a=ids[j],b=ids[(j+1)%3],key=[Math.min(a,b),Math.max(a,b)].join(':');const e=edges.get(key)||[0,0];e[0]++;e[1]+=a<b?1:-1;edges.set(key,e);used.add(a);}}for(const [n,d]of edges.values()){assert.equal(n,2,'closed part');assert.equal(d,0,'oriented part');}assert.equal(used.size,m.vertices.length/3);assert.ok(volume(m)>0);}
@@ -38,4 +39,30 @@ test('AMS material separation stays closed across body sizes, branch widths and 
 });
 test('AMS parts stay closed with joined crystal frames',()=>{
  for(const silhouette of ['hex-tips','plates','leaves']){const m=design({centre:'text',centreText:'LOVE',centreSize:24,centreAms:'on',silhouette,growth:'airy',complexity:18,fullness:100,branch:1.2});assert.equal(m.valid,true);for(const p of m.parts)closed(p);assert.ok(Math.abs(m.parts.reduce((v,p)=>v+volume(p),0)-volume(m))<1e-3);}
+});
+
+test('solid and open text centres export closed AMS parts and reproduce saved recipes',()=>{
+ for(const centreJoin of ['solid-random','solid-hex','solid-circle','open-random','open-hex','open-circle'])for(const centreFont of centreTextFonts)for(const centreText of ['Xmas','Love','A B']){
+  const m=design({centre:'text',centreJoin,centreFont,centreText,centreSize:26,centreAms:'on',seed:'frame-tests',branch:1.6});
+  assert.equal(m.valid,true);closed(m);for(const p of m.parts)closed(p);
+  assert.ok(Math.abs(m.parts.reduce((v,p)=>v+volume(p),0)-volume(m))<.001);
+  assert.deepEqual(decode(encode(m.s)),m.s);assert.ok(export3mf(m).length>1000);
+ }
+ const solid=design({centre:'text',centreJoin:'solid-hex',centreSize:26});assert.equal(solid.s.centreAms,'on');
+ const open=design({centre:'text',centreJoin:'open-hex',centreSize:26});assert.equal(open.s.centreAms,'off');assert.equal(open.parts,null);
+});
+
+test('open framed words leave clear space below the letters without a support beam',()=>{
+ for(const style of ['open-hex','open-circle']){
+  const p=framedTextPlan({text:'Xmas',font:'courgette',radius:13,branch:1.6,style,slots:Array(100).fill(.3)});
+  const bottom=Math.min(...p.letterPaths.flat().map(v=>v.Y))/10000;
+  const gap=int([[[-6,bottom-.8],[6,bottom-.8],[6,bottom-.3],[-6,bottom-.3]]]);
+  assert.equal(intersectionArea(p.paths,gap),0,'no material under the word');
+ }
+});
+test('framed AMS parts repair fine branch point contacts across seeded crystal families',()=>{
+ for(let i=0;i<8;i++)for(const centreJoin of ['solid-random','open-random']){
+  const m=design({seed:'frame-seed-'+i,centre:'text',centreJoin,centreText:'Xmas',centreFont:'courgette',centreSize:26,centreAms:'on',silhouette:['fern','hex-tips','random','plates'][i%4],complexity:10,fullness:50});
+  closed(m);m.parts.forEach(closed);assert.ok(Math.abs(m.parts.reduce((s,p)=>s+volume(p),0)-volume(m))<.001);
+ }
 });
