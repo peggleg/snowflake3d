@@ -12,8 +12,10 @@
     "build:snowflake": "npm run build",
     "check:snowflake": "npm run check",
     "pages:create": "npx --yes wrangler@4.151.1 pages project create snowflake3d --production-branch main",
-    "pages:deploy": "npm test && npm run build && npm run check && npx --yes wrangler@4.151.1 pages deploy dist-snowflake --project-name snowflake3d --branch main",
-    "pages:deploy:preview": "npm test && npm run build && npm run check && npx --yes wrangler@4.151.1 pages deploy dist-snowflake --project-name snowflake3d --branch preview"
+    "pages:deploy": "npm test && npm run build:production && npm run check:production && npx --yes wrangler@4.151.1 pages deploy dist-snowflake --project-name snowflake3d --branch main",
+    "pages:deploy:preview": "npm test && npm run build && npm run check && npx --yes wrangler@4.151.1 pages deploy dist-snowflake --project-name snowflake3d --branch preview",
+    "build:production": "CF_PAGES_BRANCH=main npm run build",
+    "check:production": "CF_PAGES_BRANCH=main npm run check"
   },
   "devDependencies": {
     "opentype.js": "^2.0.0",
