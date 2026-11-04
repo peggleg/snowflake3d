@@ -15,7 +15,7 @@ test('AMS partitions only the centre glyphs into two closed non-overlapping mate
   const m=design(s),plain=design({...s,centreAms:'off'});assert.equal(m.valid,true);assert.equal(m.parts.length,2);for(const p of m.parts)closed(p);
   assert.deepEqual(m.vertices,plain.vertices);assert.deepEqual(m.faces,plain.faces);assert.deepEqual(exportStl(m),exportStl(plain));
   const sum=m.parts.reduce((v,p)=>v+volume(p),0);assert.ok(Math.abs(sum-volume(m))<1e-3,'same material volume within the integer-grid tolerance');assert.ok(intersectionArea(int(m.parts[0].loops),int(m.parts[1].loops))<1e-8,'no overlapping colours');
-  const plan=textCentrePlan({text:m.s.centreText,font:centreFont,join:m.s.centreJoin,radius:12,branch:1.2}),colouredArea=volume(m.parts[1])/m.s.thickness;
+  const plan=framedTextPlan({text:m.s.centreText,font:centreFont,style:m.s.centreJoin,radius:12,branch:1.2,slots:Array(100).fill(.3)}),colouredArea=volume(m.parts[1])/m.s.thickness;
   const offset=new ClipperLib.ClipperOffset(2,.25),allowed=[];offset.AddPaths(plan.letterPaths,ClipperLib.JoinType.jtRound,ClipperLib.EndType.etClosedPolygon);offset.Execute(allowed,4);
   assert.ok(Math.abs(intersectionArea(int(m.parts[1].loops),allowed)-colouredArea)<1e-5,'colour confined to glyphs within the integer-grid tolerance');
   for(let i=0;i<m.parts[1].vertices.length;i+=3)assert.ok(Math.hypot(m.parts[1].vertices[i],m.parts[1].vertices[i+1])<12,'no branch lettering in colour 2');
@@ -64,5 +64,15 @@ test('framed AMS parts repair fine branch point contacts across seeded crystal f
  for(let i=0;i<8;i++)for(const centreJoin of ['solid-random','open-random']){
   const m=design({seed:'frame-seed-'+i,centre:'text',centreJoin,centreText:'Xmas',centreFont:'courgette',centreSize:26,centreAms:'on',silhouette:['fern','hex-tips','random','plates'][i%4],complexity:10,fullness:50});
   closed(m);m.parts.forEach(closed);assert.ok(Math.abs(m.parts.reduce((s,p)=>s+volume(p),0)-volume(m))<.001);
+ }
+});
+
+test('raised text is a closed stepped solid with optional aligned AMS parts',()=>{
+ for(const centreJoin of ['raised-random','raised-hex','raised-circle'])for(const centreFont of centreTextFonts)for(const centreAms of ['off','on']){
+  const m=design({centre:'text',centreJoin,centreFont,centreText:'Xmas',centreSize:26,centreAms});assert.equal(m.valid,true);closed(m);
+  const adj=new Map();for(let i=0;i<m.faces.length;i+=3)for(let j=0;j<3;j++){const a=m.faces[i+j],b=m.faces[i+(j+1)%3];if(!adj.has(a))adj.set(a,[]);adj.get(a).push(b);}const seen=new Set(),stack=[0];while(stack.length){const a=stack.pop();if(seen.has(a))continue;seen.add(a);stack.push(...adj.get(a));}assert.equal(seen.size,m.vertices.length/3,'one connected stepped surface');
+  const z=Array.from(m.vertices).filter((_,i)=>i%3===2);assert.equal(Math.min(...z),0);assert.equal(Math.max(...z),3.6);
+  assert.deepEqual(decode(encode(m.s)),m.s);assert.ok(exportStl(m).length>1000);assert.ok(export3mf(m).length>1000);
+  if(centreAms==='on'){m.parts.forEach(closed);assert.ok(Math.abs(m.parts.reduce((s,p)=>s+volume(p),0)-volume(m))<.001);const textZ=Array.from(m.parts[1].vertices).filter((_,i)=>i%3===2);assert.equal(Math.min(...textZ),3);assert.equal(Math.max(...textZ),3.6);}else assert.equal(m.parts,null);
  }
 });

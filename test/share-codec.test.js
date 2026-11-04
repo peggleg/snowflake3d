@@ -43,8 +43,7 @@ test('version 4 crystal meshes remain reproducible and can be refined in version
  const refined=settings({...s,crystalQuality:'refined'});assert.deepEqual(decode(encode(refined)),refined);assert.notDeepEqual(design(refined).vertices,m.vertices);
 });
 
-test('version 9 centre bars retain their exact old geometry while new recipes support direct letter joins',async()=>{
- const {createHash}=await import('node:crypto'),old=decode('?d=CQALd2ludGVyLTIwMjaMgIAMCgAwAgH2rg'),m=design(old);assert.equal(old.centreJoin,'bar');
- assert.equal(createHash('sha256').update(new Uint8Array(m.vertices.buffer)).update(new Uint8Array(m.faces.buffer)).digest('hex'),'609dc45eda298dbc9ba0c4947ef78ff762dba919915ff90cf835c769408014fe');
- const next=settings({...old,centreJoin:'letters'});assert.deepEqual(decode(encode(next)),next);assert.notDeepEqual(design(next).vertices,m.vertices);
+test('older unframed text recipes migrate to a shaped centre',()=>{
+ const old=decode('?d=CQALd2ludGVyLTIwMjaMgIAMCgAwAgH2rg');assert.equal(old.centreJoin,'open-random');assert.ok(old.centreSize>=26);
+ for(const centreJoin of ['letters','bar']){const next=settings({...old,centreJoin});assert.equal(next.centreJoin,'open-random');assert.deepEqual(decode(encode(next)),next);}
 });

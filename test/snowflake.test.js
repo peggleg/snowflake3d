@@ -235,7 +235,7 @@ test('Airy is the new default and open text presets remain connected printable m
 
 test('centre text is a connected printable bridge with six branch joins and preserved counters',async()=>{
  for(const centreFont of ['lato','breeserif'])for(const centreText of ['TEXT','LOVE','Julia','2026','A-B'])for(const growth of ['airy','natural','original']){
-  const s=settings({centre:'text',centreText,centreFont,growth,centreSize:24,branch:1.2}),m=design(s);checkMesh(m);assert.equal(m.valid,true);assert.equal(m.centreKind,'text');assert.deepEqual(design(decode(encode(s))).vertices,m.vertices);
+  const s=settings({centre:'text',centreText,centreFont,growth,centreSize:24,branch:1.2}),m=design(s);checkMesh(m);assert.equal(m.valid,true);assert.equal(m.s.centre,'text');assert.ok(['hex-frame','ring'].includes(m.centreKind));assert.deepEqual(design(decode(encode(s))).vertices,m.vertices);
  }
  for(const [diameter,branch,centreSize]of [[40,4,10],[245,1.2,30]]){const m=design({centre:'text',centreText:'LOVE',diameter,branch,centreSize,printer:'a1'});checkMesh(m);assert.equal(m.bounds.maxY,diameter/2+7);}
  const small=design({centre:'text',centreText:'LONG CENTRE',diameter:40,centreSize:10});assert.equal(small.valid,false);assert.equal(small.issue,'centreText');assert.throws(()=>exportStl(small));assert.throws(()=>export3mf(small));
@@ -253,5 +253,5 @@ test('direct centre-letter joins are connected printable words without the suppo
  for(const centreFont of centreTextFonts)for(const centreText of ['TEXT','Text','Julia','A-B','O\'Neil','A B']){
   const s=settings({centre:'text',centreText,centreFont,centreJoin:'letters',centreSize:30,branch:1.2}),m=design(s);checkMesh(m);assert.equal(m.valid,true);assert.deepEqual(design(decode(encode(s))).vertices,m.vertices);
  }
- assert.equal(defaults.centreJoin,'letters');
+ assert.equal(defaults.centreJoin,'open-random');
 });

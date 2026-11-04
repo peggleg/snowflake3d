@@ -1,9 +1,9 @@
 import ClipperLib from 'clipper-lib';
 import {centrePlan} from './centre.js';
 import {textCentrePlan} from './centre-text.js';
-export const framedTextStyles=['solid-random','solid-hex','solid-circle','open-random','open-hex','open-circle'];
+export const framedTextStyles=['solid-random','solid-hex','solid-circle','open-random','open-hex','open-circle','raised-random','raised-hex','raised-circle'];
 export function framedTextPlan({text,font,radius,branch,style,slots}){
- const solid=style.startsWith('solid-'),circular=style.endsWith('circle')||(style.endsWith('random')&&slots[90]>=.5);
+ const solid=(style.startsWith('solid-')||style.startsWith('raised-')),circular=style.endsWith('circle')||(style.endsWith('random')&&slots[90]>=.5);
  const frame=centrePlan({choice:circular?(solid?'circle':'ring'):(solid?'hexagon':'hex-frame'),radius,branch,slots,matched:true});
  const word=textCentrePlan({text,font,radius:radius*.78,branch,join:'letters'}),paths=[...frame.paths];
  if(!solid){
