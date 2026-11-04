@@ -41,10 +41,10 @@ function render(s,record=true){
  if(m.s.centre==='text')$('centre-hint').textContent='The word joins all six branches. Increase centre size or shorten the text if the letters are too small.';
  const mixed=m.s.mode==='text'&&m.s.armLayout==='alternating';
  const flowing=m.s.mode==='text'&&m.s.font!=='stroke'&&m.s.textLayout==='flowing';
- const textMode=m.s.mode==='text',scriptMode=textMode&&m.s.font!=='stroke',hasText=m.s.mode!=='random';$('text-control').hidden=$('text-hint').hidden=!hasText;form.elements.text.required=hasText;
- $('arm-layout-control').hidden=m.s.mode!=='text';
- $('text-weight-control').hidden=!flowing;form.elements.branch.closest('label').hidden=flowing&&!mixed;
- $('font-control').hidden=!textMode;$('text-size-control').hidden=$('text-position-control').hidden=$('text-layout-control').hidden=$('letter-spacing-control').hidden=!scriptMode;
+ const textMode=m.s.mode==='text',scriptMode=textMode&&m.s.font!=='stroke',hasText=m.s.mode!=='random';$('text-control').hidden=$('text-hint').hidden=m.s.mode!=='prompt';$('text-control').firstChild.nodeValue='Pattern description';form.elements.text.required=hasText;
+ $('arm-layout-control').hidden=true;
+ $('text-weight-control').hidden=true;form.elements.branch.closest('label').hidden=flowing&&!mixed;
+ $('font-control').hidden=$('text-size-control').hidden=$('text-position-control').hidden=$('text-layout-control').hidden=$('letter-spacing-control').hidden=true;
  form.elements.text.maxLength=textMode?12:120;form.elements.text.placeholder=textMode?'text test':'e.g. full fern or delicate crystal';
  $('text-hint').textContent=textMode?(scriptMode?(flowing?'Flowing mirrored script, using name case for readability. Reduce letter weight for a more open pattern.':m.s.textLayout==='single'?'One readable word on each arm. Lato and Bree Serif work well with capitals.':'Mirrored copies create a decorative pattern. Use mixed case for script fonts; increase letter spacing if letters merge.'):'Original block lettering repeats in six arms. Longer text needs a larger diameter.'):'Create a repeatable abstract design from up to 120 characters. Try “full fern” or “delicate crystal”. Runs locally; letters are not printed.';
  $('growth-options').hidden=textMode&&!mixed;
