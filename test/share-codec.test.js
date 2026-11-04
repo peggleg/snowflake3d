@@ -8,7 +8,7 @@ test('compact links omit defaults, pack generated seeds and retain exact setting
  assert.ok(encode(samples[1]).length<=36);
 });
 test('all options and numeric ranges survive compact round trips',()=>{
- const options={centreAms:['off','on'],mainColour:['#FFFFFF','#123456'],centreColour:['#D94A64','#AABBCC'],growth:['original','airy','natural'],naturalStyle:['random','stellar','fern','plate'],crystalQuality:['original','refined'],silhouette:['random-all','simple','plates','hex-tips','leaves','needles','random','legacy','star','fern','crystal','rounded'],mode:['random','text','prompt'],armLayout:['all','alternating'],centreText:['TEXT','George','2026','A-B'],centreFont:['lato','breeserif','courgette','berkshireswash','niconne','montecarlo'],centre:['text','random','original','solid-star','star-frame','hexagon','hex-frame','circle','ring','rosette','web'],font:['stroke','montecarlo','niconne','lato','breeserif','courgette','berkshireswash'],textLayout:['mirrored','single','flowing'],pattern:['mixed','open','lattice'],printer:['mini','a1']};
+ const options={centreJoin:['bar','letters'],centreAms:['off','on'],mainColour:['#FFFFFF','#123456'],centreColour:['#D94A64','#AABBCC'],growth:['original','airy','natural'],naturalStyle:['random','stellar','fern','plate'],crystalQuality:['original','refined'],silhouette:['random-all','simple','plates','hex-tips','leaves','needles','random','legacy','star','fern','crystal','rounded'],mode:['random','text','prompt'],armLayout:['all','alternating'],centreText:['TEXT','George','2026','A-B'],centreFont:['lato','breeserif','courgette','berkshireswash','niconne','montecarlo'],centre:['text','random','original','solid-star','star-frame','hexagon','hex-frame','circle','ring','rosette','web'],font:['stroke','montecarlo','niconne','lato','breeserif','courgette','berkshireswash'],textLayout:['mirrored','single','flowing'],pattern:['mixed','open','lattice'],printer:['mini','a1']};
  for(const [key,values]of Object.entries(options))for(const value of values){const s=settings({[key]:value});assert.deepEqual(decode(encode(s)),s);}
  for(const value of [-10,-2.15,-0,0,3.3333333333333335,10]){const s=settings({textPosition:value});assert.deepEqual(decode(encode(s)),s);}
  const s=settings({seed:'S'.repeat(128),mode:'prompt',text:'winter '.repeat(17).trim(),diameter:245,thickness:8,complexity:18,branch:4,centreSize:30,fullness:100,textSize:150,letterSpacing:40});assert.deepEqual(decode(encode(s)),s);
@@ -41,4 +41,10 @@ test('version 4 crystal meshes remain reproducible and can be refined in version
  assert.equal(s.crystalQuality,'original');const m=design(s);
  assert.equal(createHash('sha256').update(new Uint8Array(m.vertices.buffer)).update(new Uint8Array(m.faces.buffer)).digest('hex'),'31cab6ec9d478f9ddb1b6622e5c6ac7468886d8ad84fa429d0c5efddb222db65');
  const refined=settings({...s,crystalQuality:'refined'});assert.deepEqual(decode(encode(refined)),refined);assert.notDeepEqual(design(refined).vertices,m.vertices);
+});
+
+test('version 9 centre bars retain their exact old geometry while new recipes support direct letter joins',async()=>{
+ const {createHash}=await import('node:crypto'),old=decode('?d=CQALd2ludGVyLTIwMjaMgIAMCgAwAgH2rg'),m=design(old);assert.equal(old.centreJoin,'bar');
+ assert.equal(createHash('sha256').update(new Uint8Array(m.vertices.buffer)).update(new Uint8Array(m.faces.buffer)).digest('hex'),'609dc45eda298dbc9ba0c4947ef78ff762dba919915ff90cf835c769408014fe');
+ const next=settings({...old,centreJoin:'letters'});assert.deepEqual(decode(encode(next)),next);assert.notDeepEqual(design(next).vertices,m.vertices);
 });

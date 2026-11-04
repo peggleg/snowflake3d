@@ -14,7 +14,7 @@ test('AMS partitions only the centre glyphs into two closed non-overlapping mate
   const m=design(s),plain=design({...s,centreAms:'off'});assert.equal(m.valid,true);assert.equal(m.parts.length,2);for(const p of m.parts)closed(p);
   assert.deepEqual(m.vertices,plain.vertices);assert.deepEqual(m.faces,plain.faces);assert.deepEqual(exportStl(m),exportStl(plain));
   const sum=m.parts.reduce((v,p)=>v+volume(p),0);assert.ok(Math.abs(sum-volume(m))<1e-3,'same material volume within the integer-grid tolerance');assert.ok(intersectionArea(int(m.parts[0].loops),int(m.parts[1].loops))<1e-8,'no overlapping colours');
-  const plan=textCentrePlan({text:m.s.centreText,font:centreFont,radius:12,branch:1.2}),colouredArea=volume(m.parts[1])/m.s.thickness;
+  const plan=textCentrePlan({text:m.s.centreText,font:centreFont,join:m.s.centreJoin,radius:12,branch:1.2}),colouredArea=volume(m.parts[1])/m.s.thickness;
   const offset=new ClipperLib.ClipperOffset(2,.25),allowed=[];offset.AddPaths(plan.letterPaths,ClipperLib.JoinType.jtRound,ClipperLib.EndType.etClosedPolygon);offset.Execute(allowed,4);
   assert.ok(Math.abs(intersectionArea(int(m.parts[1].loops),allowed)-colouredArea)<1e-5,'colour confined to glyphs within the integer-grid tolerance');
   for(let i=0;i<m.parts[1].vertices.length;i+=3)assert.ok(Math.hypot(m.parts[1].vertices[i],m.parts[1].vertices[i+1])<12,'no branch lettering in colour 2');

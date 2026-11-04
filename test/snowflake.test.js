@@ -247,3 +247,11 @@ test('all six connected centre fonts keep script details and one closed printabl
   const s=settings({centre:'text',centreText,centreFont,centreSize:24,branch:1.2}),m=design(s);checkMesh(m);assert.equal(m.valid,true);assert.deepEqual(design(decode(encode(s))).vertices,m.vertices);
  }
 });
+
+test('direct centre-letter joins are connected printable words without the support bar',async()=>{
+ const {centreTextFonts}=await import('../snowflake/src/centre-text.js');
+ for(const centreFont of centreTextFonts)for(const centreText of ['TEXT','Text','Julia','A-B','O\'Neil','A B']){
+  const s=settings({centre:'text',centreText,centreFont,centreJoin:'letters',centreSize:30,branch:1.2}),m=design(s);checkMesh(m);assert.equal(m.valid,true);assert.deepEqual(design(decode(encode(s))).vertices,m.vertices);
+ }
+ assert.equal(defaults.centreJoin,'letters');
+});
