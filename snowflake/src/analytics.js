@@ -7,7 +7,7 @@ const hosts=['snowflake3d.com','www.snowflake3d.com','preview.snowflake3d.pages.
 const allowedHost=hosts.includes(location.hostname)||(import.meta.env.VITE_ANALYTICS_LOCAL_TEST==='true'&&['127.0.0.1','localhost'].includes(location.hostname));
 let choice=null,active=false,loaded=false,allowTracking=false,initialized=false,expires=0,persisted=false,expiryTimer;
 let channel=null;try{if(typeof BroadcastChannel==='function')channel=new BroadcastChannel('sf3d-privacy-choice');}catch{/* Cross-tab sync is optional; focus/expiry checks still apply. */}
-const common=()=>({page_location:location.origin+'/snowflake',page_referrer:'',page_title:'Snowflake workshop'});
+const common=()=>({page_location:location.origin+'/snowflake',page_referrer:'',page_title:'Snowflake workshop',...(location.hostname==='preview.snowflake3d.pages.dev'?{debug_mode:true}:{})});
 function stored(){try{const raw=document.cookie.split(';').map(v=>v.trim()).find(v=>v.startsWith(CONSENT_KEY+'='));if(!raw)return null;const decoded=decodeURIComponent(raw.slice(CONSENT_KEY.length+1)),value=readConsent(decoded);if(value)expires=JSON.parse(decoded).expires;return value;}catch{return null;}}
 function save(value){choice=value;expires=Date.now()+CONSENT_MS;try{document.cookie=`${CONSENT_KEY}=${encodeURIComponent(JSON.stringify({version:1,choice:value,expires}))}; Max-Age=${CONSENT_MS/1000}; Path=/; SameSite=Lax${location.protocol==='https:'?'; Secure':''}`;persisted=stored()===value;}catch{persisted=false;}channel?.postMessage('changed');}
 function watchExpiry(){clearTimeout(expiryTimer);if(!active)return;const remaining=expires-Date.now();if(remaining<=0){choice=null;stop();location.reload();return;}expiryTimer=setTimeout(watchExpiry,Math.min(remaining,2147483647));}
@@ -23,9 +23,9 @@ function start(){
  window.gtag('set',{...common(),url_passthrough:false,ads_data_redaction:true});
  window.gtag('consent','update',{analytics_storage:'granted',ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});
  window.gtag('js',new Date());
- window.gtag('config',id,{...common(),send_page_view:false,ignore_referrer:true,allow_google_signals:false,allow_ad_personalization_signals:false,cookie_prefix:'sf3d',cookie_domain:'none',cookie_expires:CONSENT_MS/1000,cookie_update:false,cookie_flags:'SameSite=Lax;Secure',...(location.hostname==='preview.snowflake3d.pages.dev'?{debug_mode:true}:{})});
- const script=document.createElement('script');script.async=true;script.src='https://www.googletagmanager.com/gtag/js?id='+encodeURIComponent(id);script.referrerPolicy='no-referrer';script.onerror=()=>{active=false;};document.head.append(script);
- watchExpiry();track('page_view');
+ window.gtag('config',id,{...common(),send_page_view:false,ignore_referrer:true,allow_google_signals:false,allow_ad_personalization_signals:false,cookie_prefix:'sf3d',cookie_domain:'none',cookie_expires:CONSENT_MS/1000,cookie_update:false,cookie_flags:'SameSite=Lax;Secure'});
+ const script=document.createElement('script');script.async=true;script.src='https://www.googletagmanager.com/gtag/js?id='+encodeURIComponent(id);script.referrerPolicy='no-referrer';script.onerror=()=>{active=false;};script.onload=()=>track('page_view');document.head.append(script);
+ watchExpiry();
 }
 export function track(name,input){
  if(!active||choice!=='granted'||!allowTracking)return;

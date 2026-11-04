@@ -38,6 +38,8 @@ Keep these settings in place. They are account settings, not something the repos
 | download_zip | design_count; file_format = stl, 3mf or both |
 | copy_design_link | None |
 
+Download events are recorded after the file is prepared and before handing it to the browser; they indicate download initiation, not successful completion. The initial page_view waits for the Google script load event. Preview app events explicitly include debug_mode for DebugView.
+
 Actions before consent are discarded, not queued for later collection. If Scrolls remains enabled, GA may additionally report its scroll event. Events do not establish that a file printed successfully.
 
 ## Check the deployed preview
