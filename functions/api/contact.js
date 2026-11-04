@@ -3,18 +3,35 @@ const emailPattern=/^[A-Za-z0-9.!#$%&'*+\/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9.
 const validEmail=value=>typeof value==='string'&&value.length<=254&&!/[\s\r\n]/.test(value)&&emailPattern.test(value);
 const mailFailure=(status,code)=>reply({error:`We could not submit your enquiry. Please try again later. Reference: EMAIL_${status}_${code}.`},502);
 const reply=(data,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Robots-Tag':'noindex, nofollow'}});
-function ready(env){return /^[a-f0-9]{32}$/i.test(env.CONTACT_ACCOUNT_ID||'')&&validEmail(env.CONTACT_TO_EMAIL)&&validEmail(env.CONTACT_FROM_EMAIL)&&!!env.CONTACT_EMAIL_TOKEN&&!!env.TURNSTILE_SECRET_KEY&&!!env.TURNSTILE_SITE_KEY;}
+const settingNames=['CONTACT_ACCOUNT_ID','CONTACT_TO_EMAIL','CONTACT_FROM_EMAIL','CONTACT_EMAIL_TOKEN','TURNSTILE_SECRET_KEY','TURNSTILE_SITE_KEY'];
+const cleanSettings=env=>Object.fromEntries(settingNames.map(name=>[name,typeof env[name]==='string'?env[name].trim():'']));
+export function contactConfigurationIssues(env){
+ const issues=[];
+ for(const name of settingNames){const value=env[name];if(!value)issues.push({name,reason:'missing'});else if(name==='CONTACT_ACCOUNT_ID'&&!/^[a-f0-9]{32}$/i.test(value))issues.push({name,reason:'expected 32 hexadecimal characters'});else if((name==='CONTACT_TO_EMAIL'||name==='CONTACT_FROM_EMAIL')&&!validEmail(value))issues.push({name,reason:'invalid email format'});}
+ return issues;
+}
 async function readBody(request){
  const reader=request.body?.getReader();if(!reader)throw Error('empty');const chunks=[];let size=0;
  while(true){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>MAX_BODY){await reader.cancel();throw Error('large');}chunks.push(value);}
  const bytes=new Uint8Array(size);let offset=0;for(const c of chunks){bytes.set(c,offset);offset+=c.length;}return JSON.parse(new TextDecoder().decode(bytes));
 }
-export function contactHandler(fetcher=fetch){return async({request,env})=>{
+export function contactHandler(fetcher=fetch,{warn=(...args)=>console.warn(...args),now=Date.now}={}){
+ let lastWarning=-Infinity,lastSignature='';
+ return async({request,env})=>{
+ env=cleanSettings(env);
+ const issues=contactConfigurationIssues(env),available=issues.length===0;
+ function reportConfiguration(){
+  const signature=JSON.stringify(issues),time=now();
+  if(issues.length&&(signature!==lastSignature||time-lastWarning>=60000)){
+   // Names and validation categories only. Never log values, requests or correspondence.
+   warn('Snowflake3D contact configuration incomplete',signature);lastWarning=time;lastSignature=signature;
+  }
+ }
  const url=new URL(request.url);
- if(request.method==='GET')return reply({available:ready(env),siteKey:ready(env)?env.TURNSTILE_SITE_KEY:null});
+ if(request.method==='GET'){reportConfiguration();return reply({available,siteKey:available?env.TURNSTILE_SITE_KEY:null});}
  if(request.method!=='POST')return reply({error:'Method not allowed.'},405);
  if(request.headers.get('Origin')!==url.origin||request.headers.get('Sec-Fetch-Site')==='cross-site')return reply({error:'Please submit this form from this website.'},403);
- if(!ready(env))return reply({error:'The enquiry form is not available yet. Please try again later.'},503);
+ if(!available){reportConfiguration();return reply({error:'The enquiry form is not available yet. Please try again later.'},503);}
  if(!/^application\/json(?:;|$)/i.test(request.headers.get('Content-Type')||''))return reply({error:'Invalid submission format.'},415);
  if(Number(request.headers.get('Content-Length'))>MAX_BODY)return reply({error:'Your message is too long.'},413);
  let data;try{data=await readBody(request);}catch(e){return reply({error:e.message==='large'?'Your message is too long.':'Invalid submission.'},e.message==='large'?413:400);}
@@ -39,4 +56,5 @@ export function contactHandler(fetcher=fetch){return async({request,env})=>{
   return reply({ok:true,message:'Your enquiry has been submitted. We will reply to the email address you provided.'});
  }catch{return reply({error:'We could not confirm submission. Please try again later.'},503);}
 };}
-export const onRequest=context=>contactHandler()(context);
+const handler=contactHandler();
+export const onRequest=context=>handler(context);

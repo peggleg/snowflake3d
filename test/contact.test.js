@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {contactHandler} from '../functions/api/contact.js';
+import {contactHandler,contactConfigurationIssues} from '../functions/api/contact.js';
 const env={CONTACT_ACCOUNT_ID:'a'.repeat(32),CONTACT_TO_EMAIL:'private@example.net',CONTACT_FROM_EMAIL:'privacy@snowflake3d.com',CONTACT_EMAIL_TOKEN:'private-api-token',TURNSTILE_SECRET_KEY:'private-turnstile-secret',TURNSTILE_SITE_KEY:'public-site-key'};
 const body={email:'visitor@example.org',message:'Please explain the analytics data you hold.',token:'one-use-token',website:''};
 const request=(data=body,extra={})=>new Request('https://preview.snowflake3d.pages.dev/api/contact',{method:'POST',headers:{Origin:'https://preview.snowflake3d.pages.dev','Content-Type':'application/json',...extra},body:JSON.stringify(data)});
@@ -19,3 +19,14 @@ test('mail failures expose only safe numeric references, not provider details',a
  let count=0;const handle=contactHandler(async()=>++count===1?Response.json(valid):Response.json({success:false,errors:[{code:'private@example.net',message:env.CONTACT_EMAIL_TOKEN}]},{status:401}));const response=await handle({request:request(),env});assert.match((await response.json()).error,/EMAIL_401_UNSPECIFIED/);
 });
 test('verified destination acknowledgement tolerates provider address case normalization',async()=>{const m=mock(valid,{success:true,result:{delivered:[env.CONTACT_TO_EMAIL.toUpperCase()]}});const res=await m.handle({request:request(),env});assert.equal(res.status,200);assert.equal((await res.json()).ok,true);});
+
+test('configuration diagnostics name missing or invalid settings without logging their values',async()=>{
+ const logs=[];let time=0;const handle=contactHandler(()=>{throw Error('must not send');},{warn:(...args)=>logs.push(args),now:()=>time});
+ const broken={...env,CONTACT_ACCOUNT_ID:'not-an-account-id',CONTACT_FROM_EMAIL:'not-an-email',CONTACT_EMAIL_TOKEN:''};
+ const req=()=>new Request('https://snowflake3d.com/api/contact');
+ const res=await handle({request:req(),env:broken});assert.deepEqual(await res.json(),{available:false,siteKey:null});
+ assert.deepEqual(contactConfigurationIssues(broken),[{name:'CONTACT_ACCOUNT_ID',reason:'expected 32 hexadecimal characters'},{name:'CONTACT_FROM_EMAIL',reason:'invalid email format'},{name:'CONTACT_EMAIL_TOKEN',reason:'missing'}]);
+ assert.equal(logs.length,1);const output=JSON.stringify(logs);for(const value of Object.values(broken).filter(Boolean))assert.ok(!output.includes(value));
+ await handle({request:req(),env:broken});assert.equal(logs.length,1);time=60001;await handle({request:req(),env:broken});assert.equal(logs.length,2);
+ const good=await handle({request:req(),env:Object.fromEntries(Object.entries(env).map(([k,v])=>[k,' '+v+'\n']))});assert.deepEqual(await good.json(),{available:true,siteKey:'public-site-key'});assert.equal(logs.length,2);
+});

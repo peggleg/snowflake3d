@@ -57,3 +57,9 @@ Configure Production settings separately only when the tested release is approve
 - [Verified destination addresses](https://developers.cloudflare.com/email-service/configuration/email-routing-addresses/).
 - [Server-side Turnstile validation](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/).
 - [Pages Functions routing](https://developers.cloudflare.com/pages/functions/routing/).
+
+## Diagnosing unavailable production configuration
+
+The function trims surrounding whitespace in its six settings. When a required value is absent or an account ID/email has invalid format, GET `/api/contact` remains `{available:false,siteKey:null}`. Private Functions logs show `Snowflake3D contact configuration incomplete` with setting names and validation categories only. No setting values, recipient/sender addresses, request URLs or message contents are logged by this diagnostic. Repeated identical warnings are limited to once per minute per handler instance.
+
+Start the latest Production deployment’s Functions log stream, then refresh `/api/contact` to capture the warning. Check that settings were added to the **Pages project’s Production environment**, rather than Preview or a separate Worker. Correct the named setting, save it and deploy again. No actual enquiry or email is needed to check configuration readiness.
