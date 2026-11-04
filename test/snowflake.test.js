@@ -12,7 +12,18 @@ test('seed and all settings round-trip deterministically',()=>{const m=design(de
 test('mesh is one watertight solid across seed, pattern and size extremes',()=>{for(let i=0;i<24;i++)for(const pattern of ['mixed','open','lattice'])checkMesh(design({growth:'original',seed:`test-${i}`,diameter:i%2?40:245,thickness:i%2?1:8,branch:i%2?4:1.2,complexity:i%9+1,pattern,printer:'a1'}));});
 test('hanging bore stays 4 mm and ring reaches exactly R+7 across sizes',()=>{for(const diameter of [40,100,245]){const m=design({diameter,printer:'a1'});assert.equal(m.bounds.maxY,diameter/2+7);const bore=m.loops.find(l=>l.every(([x,y])=>Math.abs(x)<=2.001&&Math.abs(y-(diameter/2+3))<=2.001));assert.ok(bore);assert.equal(Math.max(...bore.map(p=>p[0]))-Math.min(...bore.map(p=>p[0])),4);}});
 test('actual bounds including ring enforce printer margin and block both exports',()=>{const m=design({diameter:245});assert.equal(m.valid,false);assert.throws(()=>exportStl(m));assert.throws(()=>export3mf(m));assert.equal(design({diameter:245,printer:'a1'}).valid,true);assert.throws(()=>settings({diameter:NaN}));assert.throws(()=>settings({printer:'x'}));});
-test('STL length and complete project archive settings',()=>{const m=design(defaults),bytes=exportStl(m);assert.equal(bytes.length,84+m.faces.length/3*50);assert.equal(new DataView(bytes.buffer).getUint32(80,true),m.faces.length/3);for(const printer of ['mini','a1']){const files=projectFiles(design({printer})),p=JSON.parse(files['Metadata/project_settings.config']);assert.equal(p.sparse_infill_pattern,'gyroid');assert.equal(p.sparse_infill_density,'8%');assert.equal(p.wall_loops,'2');assert.equal(p.top_shell_layers,'3');assert.equal(p.bottom_shell_layers,'3');assert.equal(p.top_shell_thickness,'0');assert.equal(p.bottom_shell_thickness,'0');assert.ok(p.machine_start_gcode);assert.ok(p.machine_end_gcode);assert.ok(Object.keys(p).length>400);assert.ok(files['Metadata/model_settings.config']);assert.ok(files['3D/3dmodel.model'].includes('transform='));assert.equal(new DataView(export3mf(m).buffer).getUint32(0,true),0x04034b50);}});
+test('STL geometry and profile-free 3MF preserve build-plate placement and saved recipe',()=>{
+ const m=design(defaults),bytes=exportStl(m);assert.equal(bytes.length,84+m.faces.length/3*50);assert.equal(new DataView(bytes.buffer).getUint32(80,true),m.faces.length/3);
+ for(const [printer,size]of [['mini',180],['a1',256]]){
+  const mesh=design({printer}),files=projectFiles(mesh),model=files['3D/3dmodel.model'];
+  assert.ok(!Object.hasOwn(files,'Metadata/project_settings.config'));assert.ok(files['Metadata/model_settings.config']);
+  assert.ok(!/machine_start_gcode|machine_end_gcode|printer_settings_id|filament_settings_id/.test(Object.values(files).join('')));
+  const transform=model.match(/<item objectid="3" transform="([^"]+)"/)[1].split(' ').map(Number),x=(mesh.bounds.minX+mesh.bounds.maxX)/2,y=(mesh.bounds.minY+mesh.bounds.maxY)/2;
+  assert.equal(transform[9]+x,size/2);assert.equal(transform[10]+y,size/2);assert.equal(transform[11],0);
+  assert.deepEqual(JSON.parse(files['Metadata/snowflake.json']).settings,mesh.s);
+  assert.equal(new DataView(export3mf(mesh).buffer).getUint32(0,true),0x04034b50);
+ }
+});
 
 test('batch generation provides 24 unique reproducible seeds and preserves shared settings',async()=>{
  const {batchSettings}=await import('../snowflake/src/batch.js');

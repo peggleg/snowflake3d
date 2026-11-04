@@ -22,14 +22,24 @@ test('AMS partitions only the centre glyphs into two closed non-overlapping mate
   assert.deepEqual(decode(encode(m.s)),m.s);
  }
 });
-test('Bambu project is one aligned object with two named filament-assigned parts',()=>{
- for(const printer of ['mini','a1']){const m=design({centre:'text',centreText:'LOVE',centreSize:24,centreAms:'on',mainColour:'#AABBCC',centreColour:'#FF0022',printer}),files=projectFiles(m),config=JSON.parse(files['Metadata/project_settings.config']),model=files['3D/3dmodel.model'],metadata=files['Metadata/model_settings.config'];
-  assert.deepEqual(config.filament_colour,['#AABBCC','#FF0022']);assert.equal(config.filament_settings_id.length,2);assert.equal(config.filament_type.length,2);assert.equal(config.nozzle_temperature.length,2);assert.equal(config.fan_max_speed.length,2);assert.equal(config.nozzle_diameter.length,1,'one physical nozzle');assert.equal(config.single_extruder_multi_material,'1');assert.equal(config.enable_prime_tower,'1');assert.equal(config.sparse_infill_density,'8%');assert.equal(config.wall_loops,'2');
-  assert.match(model,/<object id="3" type="model"><components>/);assert.equal((model.match(/<component objectid=/g)||[]).length,2);assert.equal((model.match(/<item objectid=/g)||[]).length,1);assert.match(model,/<item objectid="3"/);assert.match(metadata,/<part id="1"[^]*?key="extruder" value="1"/);assert.match(metadata,/<part id="2"[^]*?key="name" value="Centre text only"[^]*?key="extruder" value="2"/);assert.ok(export3mf(m).length>1000);
+test('profile-free 3MF keeps one aligned object with two named filament-assigned parts',()=>{
+ for(const printer of ['mini','a1']){
+  const m=design({centre:'text',centreText:'LOVE',centreSize:24,centreAms:'on',mainColour:'#AABBCC',centreColour:'#FF0022',printer}),files=projectFiles(m),model=files['3D/3dmodel.model'],metadata=files['Metadata/model_settings.config'];
+  assert.ok(!Object.hasOwn(files,'Metadata/project_settings.config'));
+  assert.ok(!/machine_start_gcode|filament_settings_id|nozzle_temperature|flush_volumes/.test(Object.values(files).join('')));
+  assert.match(model,/displaycolor="#AABBCC"/);assert.match(model,/displaycolor="#FF0022"/);
+  assert.match(model,/<object id="3" type="model"><components>/);assert.equal((model.match(/<component objectid=/g)||[]).length,2);assert.equal((model.match(/<item objectid=/g)||[]).length,1);
+  assert.match(metadata,/<part id="1"[^]*?key="extruder" value="1"/);assert.match(metadata,/<part id="2"[^]*?key="name" value="Centre text only"[^]*?key="extruder" value="2"/);
+  const objects=[...model.matchAll(/<mesh><vertices>(.*?)<\/vertices><triangles>(.*?)<\/triangles><\/mesh>/g)];
+  objects.forEach((o,i)=>{
+   assert.deepEqual([...o[1].matchAll(/<vertex x="([^"]+)" y="([^"]+)" z="([^"]+)"\/>/g)].flatMap(v=>v.slice(1).map(Number)),Array.from(m.parts[i].vertices,n=>n===0?0:n));
+   assert.deepEqual([...o[2].matchAll(/<triangle v1="(\d+)" v2="(\d+)" v3="(\d+)"\/>/g)].flatMap(v=>v.slice(1).map(Number)),Array.from(m.parts[i].faces));
+  });
+  assert.equal(objects.length,2);assert.ok(export3mf(m).length>1000);
  }
 });
 test('AMS is opt-in, inactive without centre text, and existing projects stay single-filament',()=>{
- for(const s of [{},{centre:'text',centreText:'LOVE',centreSize:24},{centre:'hex-frame',centreAms:'on'}]){const m=design(s);assert.equal(m.parts,null);assert.deepEqual(JSON.parse(projectFiles(m)['Metadata/project_settings.config']).filament_colour,['#FFFFFF']);}
+ for(const s of [{},{centre:'text',centreText:'LOVE',centreSize:24},{centre:'hex-frame',centreAms:'on'}]){const m=design(s);assert.equal(m.parts,null);assert.ok(!Object.hasOwn(projectFiles(m),'Metadata/project_settings.config'));assert.match(projectFiles(m)['Metadata/model_settings.config'],/key="extruder" value="1"/);assert.doesNotMatch(projectFiles(m)['Metadata/model_settings.config'],/key="extruder" value="2"/);}
  assert.equal(decode('?d=BgALd2ludGVyLTIwMjYAO64').centreAms,'off');
 });
 test('AMS material separation stays closed across body sizes, branch widths and thicknesses',()=>{

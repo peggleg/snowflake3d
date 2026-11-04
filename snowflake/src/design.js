@@ -15,7 +15,7 @@ import {naturalArm} from './natural-growth.js';
 import {branchDetail} from './branch-detail.js';
 import {conformTriangles} from './triangulate.js';
 export const defaults={seed:'winter-2026',mode:'random',armLayout:'all',growth:'airy',naturalStyle:'random',silhouette:'random',crystalQuality:'refined',centre:'random',centreText:'TEXT',centreFont:'lato',centreJoin:'open-random',centreAms:'off',mainColour:'#FFFFFF',centreColour:'#D94A64',centreSize:18,text:'text test',font:'stroke',textLayout:'mirrored',letterSpacing:0,textWeight:.65,textSize:100,textPosition:0,diameter:100,thickness:3,complexity:5,branch:1.6,fullness:30,pattern:'mixed',printer:'mini'};
-export const printers={mini:{name:'Bambu Lab A1 mini',size:180},a1:{name:'Bambu Lab A1',size:256}};
+export const printers={mini:{name:'180 × 180 mm build plate',size:180},a1:{name:'256 × 256 mm build plate',size:256}};
 export function settings(input={}){
  const s={...defaults,...input};
  for(const [k,min,max] of [['diameter',40,245],['thickness',1,8],['complexity',1,18],['branch',1.2,4],['fullness',0,100],['textSize',60,150],['textPosition',-10,10],['letterSpacing',0,40],['textWeight',.5,1.2],['centreSize',10,30]]){s[k]=Number(s[k]);if(!Number.isFinite(s[k])||s[k]<min||s[k]>max)throw Error(`Invalid ${k}: use ${min}–${max}.`);}

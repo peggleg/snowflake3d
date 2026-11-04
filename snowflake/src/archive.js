@@ -14,6 +14,6 @@ export async function exportArchive(meshes,{format='both',origin='',onProgress=(
   manifest.push({number:i+1,files:names,settings:m.s,url:`${origin}/snowflake?${encode(m.s)}`});
  }
  files['designs.json']=strToU8(JSON.stringify({units:'millimetres',designs:manifest},null,2));
- files['README.txt']=strToU8('Snowflake Workshop\n\nEach numbered ornament is a separate design. STL files contain geometry only. AMS centre-text assignments are stored in 3MF: Filament 1 is the snowflake, branch text and connectors; Filament 2 is only the centre letters. Map those filaments to your AMS slots in Bambu Studio. Open each 3MF as a separate Bambu Studio project, check the plate, then slice. The ZIP does not combine ornaments on one plate.\n\nDesign settings and share links are in designs.json.\n');
+ files['README.txt']=strToU8('Snowflake Workshop\n\nEach numbered ornament is a separate design. STL files contain geometry only. 3MF files contain geometry and named parts, without printer, process or filament profiles and without machine G-code. A geometry-only import message is expected. Select your printer/nozzle and process (for example, 0.20 mm Standard) in your slicer. For AMS centre text, add two filaments and assign the snowflake and connectors to Filament 1 and only the centre letters to Filament 2. Confirm assignments, purge settings and alignment in the sliced preview. Open each 3MF separately. The ZIP does not combine ornaments on one plate.\n\nDesign settings and share links are in designs.json.\n');
  return zipSync(files);
 }

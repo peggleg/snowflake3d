@@ -19,3 +19,10 @@ assert.ok(assets.every(f=>/\.(js|css)$/.test(f)),'No main-site image/worker asse
 console.log('Standalone build verified: generator only, isolated routes, no main-site navigation/assets/sitemap.');
 
 const routes=JSON.parse(await readFile(new URL('_routes.json',root),'utf8'));assert.deepEqual(routes.include,['/api/contact']);const contact=await readFile(new URL('contact.html',root),'utf8');assert.ok(contact.includes('Privacy enquiries')&&contact.includes('noindex,nofollow'));
+
+assert.ok(html.includes('Build plate size')&&html.includes('180 × 180 mm')&&html.includes('256 × 256 mm'));
+assert.ok(!/Bambu|choose A1|includes the model and print settings/.test(html));
+for(const f of assets.filter(f=>f.endsWith('.js'))){
+ const js=await readFile(new URL('assets/'+f,root),'utf8');
+ assert.ok(!/machine_start_gcode|machine_end_gcode|filament_settings_id|Bambu Lab A1/.test(js),'No legacy printer profiles in browser bundles');
+}

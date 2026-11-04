@@ -30,11 +30,14 @@ derivatives or Snowflake3D. Original copyright statements, reserved-name
 declarations and the OFL texts below continue to apply. Website private-use
 terms do not restrict rights granted by third-party font or software licences.
 
-Bambu Studio printer, filament and process profile data
+Historical Bambu Studio printer, filament and process profile data
 Copyright Bambu Lab and Bambu Studio contributors.
 Source: https://github.com/bambulab/BambuStudio/tree/master/resources/profiles/BBL
-Resolved snapshot: 2026-11-01. The local generator overrides print settings.
-Full source snapshots and provenance are retained in snowflake/src/profiles/.
+Resolved legacy snapshot: 2026-11-01. Retained resolved data and provenance
+are in snowflake/src/profiles/; original upstream input snapshots are not included.
+These legacy profiles are not imported by the current generator or included in
+current browser bundles or exported 3MF files. The following licence is retained
+for historical attribution; it is not a licence for generated snowflake geometry.
 
                     GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
