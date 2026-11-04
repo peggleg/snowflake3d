@@ -1,6 +1,7 @@
 const MAX_BODY=16000;
 const emailPattern=/^[A-Za-z0-9.!#$%&'*+\/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?\.[A-Za-z]{2,}$/;
 const validEmail=value=>typeof value==='string'&&value.length<=254&&!/[\s\r\n]/.test(value)&&emailPattern.test(value);
+const mailFailure=(status,code)=>reply({error:`We could not submit your enquiry. Please try again later. Reference: EMAIL_${status}_${code}.`},502);
 const reply=(data,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Robots-Tag':'noindex, nofollow'}});
 function ready(env){return /^[a-f0-9]{32}$/i.test(env.CONTACT_ACCOUNT_ID||'')&&validEmail(env.CONTACT_TO_EMAIL)&&validEmail(env.CONTACT_FROM_EMAIL)&&!!env.CONTACT_EMAIL_TOKEN&&!!env.TURNSTILE_SECRET_KEY&&!!env.TURNSTILE_SITE_KEY;}
 async function readBody(request){
@@ -29,9 +30,12 @@ export function contactHandler(fetcher=fetch){return async({request,env})=>{
   if(result.success!==true||result.hostname!==url.hostname||result.action!=='privacy-contact')return reply({error:'The security check expired or failed. Please try again.'},400);
   // Fixed server-side addresses; never turn this into an arbitrary-recipient relay.
   const sent=await fetcher(`https://api.cloudflare.com/client/v4/accounts/${env.CONTACT_ACCOUNT_ID}/email/sending/send`,{method:'POST',headers:{Authorization:`Bearer ${env.CONTACT_EMAIL_TOKEN}`,'Content-Type':'application/json'},body:JSON.stringify({to:env.CONTACT_TO_EMAIL,from:env.CONTACT_FROM_EMAIL,subject:'Snowflake3D privacy enquiry',text:`Reply address: ${email}\n\n${message}`}),signal:AbortSignal.timeout(15000)});
-  if(!sent.ok)return reply({error:'We could not submit your enquiry. Please try again later.'},502);
-  const delivered=await sent.json(),accepted=[...(delivered.result?.delivered||[]),...(delivered.result?.queued||[])];
-  if(delivered.success!==true||!accepted.includes(env.CONTACT_TO_EMAIL))return reply({error:'We could not submit your enquiry. Please try again later.'},502);
+  let delivered;try{delivered=await sent.json();}catch{return mailFailure(sent.status,'INVALID_RESPONSE');}
+  const providerCode=delivered?.errors?.find?.(e=>Number.isInteger(e?.code)&&e.code>0&&e.code<1000000)?.code||'UNSPECIFIED';
+  if(!sent.ok||delivered?.success!==true)return mailFailure(sent.status,providerCode);
+  const accepted=[...(Array.isArray(delivered.result?.delivered)?delivered.result.delivered:[]),...(Array.isArray(delivered.result?.queued)?delivered.result.queued:[])];
+  const matches=value=>typeof value==='string'&&value.toLowerCase()===env.CONTACT_TO_EMAIL.toLowerCase();
+  if(!accepted.some(matches))return mailFailure(sent.status,Array.isArray(delivered.result?.permanent_bounces)&&delivered.result.permanent_bounces.some(matches)?'BOUNCED':'DELIVERY_STATUS');
   return reply({ok:true,message:'Your enquiry has been submitted. We will reply to the email address you provided.'});
  }catch{return reply({error:'We could not confirm submission. Please try again later.'},503);}
 };}
