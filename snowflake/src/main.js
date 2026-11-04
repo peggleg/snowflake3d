@@ -48,7 +48,7 @@ function render(s,record=true){
  form.elements.text.maxLength=textMode?12:120;form.elements.text.placeholder=textMode?'text test':'e.g. full fern or delicate crystal';
  $('text-hint').textContent=textMode?(scriptMode?(flowing?'Flowing mirrored script, using name case for readability. Reduce letter weight for a more open pattern.':m.s.textLayout==='single'?'One readable word on each arm. Lato and Bree Serif work well with capitals.':'Mirrored copies create a decorative pattern. Use mixed case for script fonts; increase letter spacing if letters merge.'):'Original block lettering repeats in six arms. Longer text needs a larger diameter.'):'Create a repeatable abstract design from up to 120 characters. Try “full fern” or “delicate crystal”. Runs locally; letters are not printed.';
  $('growth-options').hidden=textMode&&!mixed;
- $('growth-control').hidden=false;
+ $('design-type-control').hidden=$('growth-control').hidden=true;
  $('fullness-hint').hidden=$('complexity-hint').hidden=$('airy-example').hidden=textMode&&!mixed;
  $('natural-style-control').hidden=true;
  $('silhouette-control').hidden=m.s.growth!=='airy'||(textMode&&!mixed);
