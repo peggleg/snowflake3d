@@ -119,3 +119,8 @@ Derived outline fonts use Snowflake-specific primary names. Original source fami
 ## Privacy enquiry form
 
 `/contact` is a separate form backed by `/api/contact` in Cloudflare Pages Functions. Submissions are emailed to one private verified destination, with server-side Turnstile validation and no website database. Runtime settings are required before the form becomes available. See [CONTACT_SETUP.md](CONTACT_SETUP.md). The generator and static assets remain outside the Function route.
+
+
+## Consent-first Analytics
+
+Google Analytics uses an explicit consent dialog and persistent Cookie settings. `/analytics` explains the cookies and events; the enquiry and information pages do not load the tag. App events exclude design recipes, entered text, filenames and copied links. Search Console Domain verification was confirmed by the operator; preview remains excluded from indexing. See [ANALYTICS_SETUP.md](ANALYTICS_SETUP.md) for settings, tests and remaining production steps.

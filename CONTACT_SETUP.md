@@ -2,7 +2,7 @@
 
 The form lives at `/contact`, linked from the generator footer. `/api/contact` is a Cloudflare Pages Function. There is no database, queue, saved submission archive or application logging of message bodies. Cloudflare and the receiving email service still process mail and may retain it under their policies.
 
-The source is prepared locally. A verified destination address alone does not activate sending. Account access is not configured in this development session; enter the settings below in Cloudflare rather than in chat or source files. No real email was sent during the automated tests.
+The preview form is deployed, and the operator confirmed a real test message arrived after updating token permissions. A verified destination address alone does not activate sending. Account access is not configured in this development session; enter the settings below in Cloudflare rather than in chat or source files. No real email was sent during the automated tests.
 
 ## 1. Create Turnstile
 
@@ -45,7 +45,7 @@ At higher abuse levels, add a Cloudflare rate rule for POST `/api/contact` using
 
 ## 5. Privacy and production
 
-Finish the privacy notice before public launch: identify the operator appropriately, describe correspondence handling, choose a retention/deletion rule for the inbox, and describe Turnstile/email providers. The form is a contact route, not a replacement for the operator's identity or a completed privacy notice. The user has not yet supplied these final details.
+Finish the privacy notice before public launch: identify the operator appropriately, describe correspondence handling, choose a retention/deletion rule for the inbox, and describe Turnstile/email providers. The form is a contact route, not a replacement for the operator's identity or a completed privacy notice. The operator selected ninety days after resolution; the handling procedure is in `docs/launch/email-retention-draft.md`. Final operator/provider details and the practical inbox deletion process remain to be confirmed.
 
 The current page includes a short handling explanation and a Cloudflare privacy link; it does not publish the unfinished policy drafts. Analytics remains absent from this form. The no-referrer policy prevents passing generator recipe URLs as navigation referrers; form requests use POST JSON rather than putting correspondence into URLs.
 

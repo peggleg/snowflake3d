@@ -1,7 +1,7 @@
 import {readFile,readdir} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const root=new URL('../dist-snowflake/',import.meta.url),files=await readdir(root);
-assert.deepEqual(files.sort(),['THIRD_PARTY_NOTICES.txt','404.html','contact.html','_routes.json','_headers','_redirects','assets','favicon.svg','snowflake.html','robots.txt'].sort());
+assert.deepEqual(files.sort(),['THIRD_PARTY_NOTICES.txt','404.html','contact.html','analytics.html','_routes.json','_headers','_redirects','assets','favicon.svg','snowflake.html','robots.txt'].sort());
 const html=await readFile(new URL('snowflake.html',root),'utf8');
 assert.ok(html.includes('Snowflake workshop'));
 assert.ok(html.includes('rel="icon"')&&html.includes('/favicon.svg?v=1'));

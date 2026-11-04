@@ -1,4 +1,6 @@
 import './contact.css';
+import {initAnalytics} from './analytics.js';
+initAnalytics({allowTracking:false});
 const form=document.getElementById('contact-form'),send=document.getElementById('send'),status=document.getElementById('contact-status');let token='',widget,busy=false;
 const update=()=>{send.disabled=!token||busy;};
 function reset(){token='';update();if(widget!==undefined)window.turnstile?.reset(widget);}
