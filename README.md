@@ -124,3 +124,9 @@ Derived outline fonts use Snowflake-specific primary names. Original source fami
 ## Consent-first Analytics
 
 Google Analytics uses an explicit consent dialog and persistent Cookie settings. `/analytics` explains the cookies and events; the enquiry and information pages do not load the tag. App events exclude design recipes, entered text, filenames and copied links. Search Console Domain verification was confirmed by the operator; preview remains excluded from indexing. See [ANALYTICS_SETUP.md](ANALYTICS_SETUP.md) for settings, tests and remaining production steps.
+
+## Public information pages
+
+The workshop footer links to `/privacy`, `/usage`, `/help`, `/independence` and the existing full third-party notices. The privacy form and cookie information page also link to the notice. All information pages offer Cookie settings but explicitly disable Google tag loading, even when analytics consent is already saved. Preview remains excluded from indexing.
+
+Usage is private and non-commercial for generated files and printed objects, with separate third-party licence rights preserved. Help describes profile-free 3MF imports and manual AMS assignment. Independence wording excludes affiliation, sponsorship, approval and endorsement by Bambu Lab, MakerWorld or MakerLab. Public privacy contact is the enquiry form; no personal operator name or receiving inbox address is published. Applicable operator-disclosure requirements and provider/account settings remain private launch-review items; these pages are not a claim that every legal requirement has been verified.

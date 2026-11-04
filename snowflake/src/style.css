@@ -22,3 +22,5 @@ form>label.dimensions-control{grid-column:span 1}
 #centre-colour{stroke:#ffffff44;stroke-width:.4;vector-effect:non-scaling-stroke;pointer-events:none}input[type=color]{padding:4px;height:38px;cursor:pointer}.material-control[hidden],#centre-ams-hint[hidden]{display:none}
 
 footer a{color:inherit;text-underline-offset:3px}
+
+footer .info-links{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 16px;margin:12px 0}footer .info-links a{padding:5px 0}

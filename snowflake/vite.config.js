@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 export default defineConfig({
  root:'snowflake',
  publicDir:'public',
- build:{outDir:'../dist-snowflake',emptyOutDir:true,rollupOptions:{input:{index:fileURLToPath(new URL('./index.html',import.meta.url)),contact:fileURLToPath(new URL('./contact.html',import.meta.url)),analytics:fileURLToPath(new URL('./analytics.html',import.meta.url))}}},
+ build:{outDir:'../dist-snowflake',emptyOutDir:true,rollupOptions:{input:{index:fileURLToPath(new URL('./index.html',import.meta.url)),contact:fileURLToPath(new URL('./contact.html',import.meta.url)),analytics:fileURLToPath(new URL('./analytics.html',import.meta.url)),privacy:fileURLToPath(new URL('./privacy.html',import.meta.url)),usage:fileURLToPath(new URL('./usage.html',import.meta.url)),help:fileURLToPath(new URL('./help.html',import.meta.url)),independence:fileURLToPath(new URL('./independence.html',import.meta.url))}}},
  plugins:[{
   name:'isolated-routes',
   generateBundle:{order:'post',handler(_,bundle){
